@@ -1,22 +1,27 @@
-# Global-Threat-Monitoring-Dashboard-OSINT-
-This project simulates an intelligence analyst workflow within a global security operations centre.
+🌍 OSINT Global Threat Monitor
 
-It collects and analyses open-source data to identify and assess potential security threats, producing actionable intelligence summaries.
+This project simulates the workflow of an Intelligence Analyst within a Global Security Operations Centre (GSOC), focusing on real-time threat monitoring and analysis using open-source intelligence (OSINT).
 
-Key Features
-Aggregates global news using OSINT sources
-Filters articles by threat indicators (terrorism, protests, geopolitical instability)
-Performs basic risk classification
-Generates a daily intelligence brief
-Use Case
+🔍 Overview
 
-Designed to replicate real-world workflows used in:
+The system collects global news data and applies keyword-based filtering and risk classification to identify potential security threats, including:
 
-Corporate intelligence centres
-Crisis response teams
-Security operations
-Skills Demonstrated
-Open-source intelligence (OSINT)
-Threat analysis
-Data collection & filtering
-Analytical reporting
+Terrorism
+Civil unrest & protests
+Geopolitical instability
+Emerging global risks
+
+It then generates a structured Daily Intelligence Brief, similar to those used in corporate security and crisis response environments.
+
+⚙️ Features
+Real-time OSINT data collection (News API)
+Threat detection using keyword analysis
+Automated risk classification (High / Medium / Low)
+Intelligence brief generation
+Interactive dashboard (Streamlit)
+🧠 Skills Demonstrated
+Open-Source Intelligence (OSINT)
+Threat & Risk Analysis
+Intelligence Reporting & Briefing
+Data Collection & Filtering
+Python for Security Applications
