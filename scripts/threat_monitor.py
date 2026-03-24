@@ -37,7 +37,7 @@ def fetch_news():
     return response.json().get("articles", [])
 
 def classify_risk(text):
-    text = text.lower()
+    text = (text or "").lower()
 
     if any(word in text for word in ["bomb", "explosion", "attack", "terror"]):
         return "HIGH"
@@ -72,6 +72,22 @@ def generate_analyst_assessment(risk_levels):
     assessment += f"- High-risk incidents: {high_count}\n"
     assessment += f"- Medium-risk incidents: {medium_count}\n"
     assessment += f"- Low-risk incidents: {low_count}\n\n"
+
+    assessment += "Operational outlook:\n"
+    if high_count >= 2:
+        assessment += (
+            "Multiple high-risk incidents were identified in current reporting. "
+            "This suggests a heightened operating environment and may warrant closer monitoring of affected regions.\n\n"
+        )
+    elif medium_count >= 3:
+        assessment += (
+            "Current reporting is dominated by protest and unrest activity. "
+            "These developments may create disruption risks for personnel, travel, and business operations.\n\n"
+        )
+    else:
+        assessment += (
+            "No dominant high-severity trend is evident in current reporting, although emerging incidents should continue to be reviewed.\n\n"
+        )
 
     assessment += "Recommendation:\n"
     assessment += "Continue monitoring for escalation, especially in locations with repeated reporting.\n"
@@ -122,6 +138,8 @@ def generate_brief():
         title = article.get("title", "No title")
         description = article.get("description", "No description")
         source = article.get("source", {}).get("name", "Unknown")
+        published_at = article.get("publishedAt", "Unknown")
+        url = article.get("url", "")
 
         combined_text = f"{title} {description}"
         risk = classify_risk(combined_text)
@@ -137,14 +155,18 @@ def generate_brief():
                 "risk": risk,
                 "location": geo["name"],
                 "lat": geo["lat"],
-                "lon": geo["lon"]
+                "lon": geo["lon"],
+                "published_at": published_at,
+                "url": url
             })
         else:
             unmapped_articles.append({
                 "title": title,
                 "source": source,
                 "risk": risk,
-                "detected_location": found_location if found_location else "None"
+                "detected_location": found_location if found_location else "None",
+                "published_at": published_at,
+                "url": url
             })
 
         report += f"Title: {title}\n"
@@ -152,6 +174,8 @@ def generate_brief():
         report += f"Risk Level: {risk}\n"
         report += f"Summary: {description}\n"
         report += f"Detected Location: {found_location if found_location else 'Unknown'}\n"
+        report += f"Published: {published_at}\n"
+        report += f"URL: {url}\n"
         report += "-" * 50 + "\n"
 
     report += generate_analyst_assessment(risk_levels)
