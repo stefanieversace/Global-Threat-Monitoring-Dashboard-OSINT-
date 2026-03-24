@@ -7,7 +7,6 @@ API_KEY = "YOUR_API_KEY_HERE"
 
 KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest"
 
-# Very simple place list to start with
 KNOWN_LOCATIONS = [
     "Paris", "London", "New York", "Baghdad", "Moscow", "Kyiv", "Jerusalem",
     "Tel Aviv", "Damascus", "Beirut", "Istanbul", "Cairo", "Tehran", "Delhi",
@@ -71,14 +70,12 @@ def generate_analyst_assessment(risk_levels):
     return assessment
 
 def extract_location(text):
-    """Very simple location detection using a known city list."""
     for location in KNOWN_LOCATIONS:
         if location.lower() in text.lower():
             return location
     return None
 
 def geocode_location(location_name):
-    """Convert a place name into coordinates."""
     if not location_name:
         return None
 
@@ -135,7 +132,6 @@ def generate_brief():
         report += "-" * 50 + "\n"
 
     report += generate_analyst_assessment(risk_levels)
-
     return report, mapped_events
 
 if __name__ == "__main__":
