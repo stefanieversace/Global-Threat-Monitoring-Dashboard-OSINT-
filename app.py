@@ -37,6 +37,9 @@ if st.button("Generate Intelligence Brief"):
             watchlist_terms=watchlist_terms,
         )
 
+        st.write(f"Mapped events found: {len(mapped_events)}")
+        st.write(f"Unmapped articles found: {len(unmapped_articles)}")
+
         if summary["high_count"] >= 3:
             st.error("Alert: Multiple high-risk incidents identified in current reporting.")
         elif summary["watchlist_matches"] > 0:
@@ -80,7 +83,6 @@ if st.button("Generate Intelligence Brief"):
         for event in mapped_events:
             if event["risk"] not in selected_risks:
                 continue
-
             filtered_events.append(event)
 
             popup_text = (
