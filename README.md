@@ -102,8 +102,8 @@ osint-threat-monitor/
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/yourusername/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/stefanieversace/Global-Threat-Monitoring-Dashboard-OSINT-.git
+cd Global-Threat-Monitoring-Dashboard-OSINT-
 ```
 
 ### 2. Install dependencies
