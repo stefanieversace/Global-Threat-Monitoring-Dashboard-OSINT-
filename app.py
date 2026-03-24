@@ -27,18 +27,18 @@ if st.button("Generate Intelligence Brief"):
                 f"Source: {event['source']}"
             )
 
-          if event["risk"] == "HIGH":
-    icon_colour = "red"
-elif event["risk"] == "MEDIUM":
-    icon_colour = "orange"
-else:
-    icon_colour = "green"
+            if event["risk"] == "HIGH":
+                icon_colour = "red"
+            elif event["risk"] == "MEDIUM":
+                icon_colour = "orange"
+            else:
+                icon_colour = "green"
 
-folium.Marker(
-    location=[event["lat"], event["lon"]],
-    popup=popup_text,
-    icon=folium.Icon(color=icon_colour)
-).add_to(threat_map)
+            folium.Marker(
+                location=[event["lat"], event["lon"]],
+                popup=popup_text,
+                icon=folium.Icon(color=icon_colour)
+            ).add_to(threat_map)
     else:
         st.info("No article locations could be mapped from the current results.")
 
