@@ -1,3 +1,4 @@
+import os
 import requests
 import streamlit as st
 import pandas as pd
@@ -5,6 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import spacy
 
 API_KEY = st.secrets["NEWS_API_KEY"]
 
@@ -14,19 +16,11 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
 HISTORY_FILE = DATA_DIR / "history.csv"
 
-KNOWN_LOCATIONS = [
-    "Paris", "London", "New York", "Baghdad", "Moscow", "Kyiv", "Jerusalem",
-    "Tel Aviv", "Damascus", "Beirut", "Istanbul", "Cairo", "Tehran", "Delhi",
-    "Mumbai", "Beijing", "Shanghai", "Tokyo", "Seoul", "Hong Kong", "Bangkok",
-    "Manila", "Jakarta", "Sydney", "Melbourne", "Lagos", "Nairobi", "Khartoum",
-    "Tripoli", "Tunis", "Algiers", "Sanaa", "Kabul", "Islamabad", "Karachi",
-    "Mexico City", "Bogota", "Sao Paulo", "Rio de Janeiro", "Buenos Aires",
-    "Santiago", "Caracas", "Lima", "Brussels", "Berlin", "Rome", "Madrid",
-    "Athens", "Warsaw", "Budapest", "Bucharest", "Gaza", "Syria", "Israel",
-    "Ukraine", "Russia", "Iran", "Iraq", "Afghanistan", "Pakistan", "India",
-    "China", "Taiwan", "Sudan", "Yemen", "Lebanon", "Turkey", "Egypt",
-    "West Bank", "Ramallah", "Doha", "Dubai", "Riyadh", "Jeddah", "Amman"
-]
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    os.system("python -m spacy download en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 REGION_MAP = {
     "Paris": "Europe",
@@ -85,6 +79,8 @@ REGION_MAP = {
     "Sydney": "Asia-Pacific",
     "Melbourne": "Asia-Pacific",
     "New York": "North America",
+    "Washington": "North America",
+    "Los Angeles": "North America",
     "Mexico City": "Latin America",
     "Bogota": "Latin America",
     "Sao Paulo": "Latin America",
@@ -138,8 +134,10 @@ SEVERITY_WEIGHTS = {
     "crisis": 2
 }
 
+
 def ensure_data_dir():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def load_history():
     ensure_data_dir()
@@ -148,6 +146,7 @@ def load_history():
         return pd.read_csv(HISTORY_FILE)
 
     return pd.DataFrame(columns=["date", "high_count", "medium_count", "low_count", "watchlist_matches"])
+
 
 def save_history(high_count, medium_count, low_count, watchlist_matches):
     ensure_data_dir()
@@ -168,6 +167,7 @@ def save_history(high_count, medium_count, low_count, watchlist_matches):
     else:
         row.to_csv(HISTORY_FILE, index=False)
 
+
 def fetch_news():
     url = (
         f"https://newsapi.org/v2/everything?"
@@ -183,6 +183,7 @@ def fetch_news():
 
     return response.json().get("articles", [])
 
+
 def score_risk(text):
     text = (text or "").lower()
     score = 0
@@ -193,6 +194,7 @@ def score_risk(text):
 
     return score
 
+
 def classify_risk(score):
     if score >= 5:
         return "HIGH"
@@ -200,20 +202,23 @@ def classify_risk(score):
         return "MEDIUM"
     return "LOW"
 
+
 def get_source_confidence(source):
     return SOURCE_CONFIDENCE.get(source, "Low")
+
 
 def extract_location(text):
     if not text:
         return None
 
-    text_lower = text.lower()
+    doc = nlp(text)
 
-    for location in KNOWN_LOCATIONS:
-        if location.lower() in text_lower:
-            return location
+    for ent in doc.ents:
+        if ent.label_ in ["GPE", "LOC"]:
+            return ent.text
 
     return None
+
 
 def geocode_location(location_name, geolocator):
     if not location_name:
@@ -232,10 +237,17 @@ def geocode_location(location_name, geolocator):
 
     return None
 
+
 def get_region(location_name):
     if not location_name:
         return "Unknown"
-    return REGION_MAP.get(location_name, "Other")
+
+    for known_name, region in REGION_MAP.items():
+        if known_name.lower() in location_name.lower():
+            return region
+
+    return "Other"
+
 
 def watchlist_match(text, watchlist_terms):
     if not watchlist_terms:
@@ -243,6 +255,7 @@ def watchlist_match(text, watchlist_terms):
 
     text_lower = (text or "").lower()
     return any(term.lower() in text_lower for term in watchlist_terms)
+
 
 def generate_key_judgements(risk_levels, region_counts, watchlist_matches):
     high_count = risk_levels.count("HIGH")
@@ -268,6 +281,7 @@ def generate_key_judgements(risk_levels, region_counts, watchlist_matches):
         judgements.append("The current reporting picture remains fluid and should be monitored for escalation or geographic spread.")
 
     return judgements[:3]
+
 
 def generate_analyst_assessment(risk_levels, region_counts, watchlist_matches):
     high_count = risk_levels.count("HIGH")
@@ -322,6 +336,7 @@ def generate_analyst_assessment(risk_levels, region_counts, watchlist_matches):
     assessment += "Continue monitoring for escalation, especially in locations with repeated reporting or watchlist relevance.\n"
 
     return assessment
+
 
 def generate_brief(max_articles=10, watchlist_terms=None):
     if watchlist_terms is None:
