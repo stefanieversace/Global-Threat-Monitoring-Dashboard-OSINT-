@@ -4,7 +4,6 @@ from datetime import datetime
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
-import streamlit as st
 API_KEY = st.secrets["NEWS_API_KEY"]
 
 KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest"
@@ -17,7 +16,9 @@ KNOWN_LOCATIONS = [
     "Tripoli", "Tunis", "Algiers", "Sanaa", "Kabul", "Islamabad", "Karachi",
     "Mexico City", "Bogota", "Sao Paulo", "Rio de Janeiro", "Buenos Aires",
     "Santiago", "Caracas", "Lima", "Brussels", "Berlin", "Rome", "Madrid",
-    "Athens", "Warsaw", "Budapest", "Bucharest"
+    "Athens", "Warsaw", "Budapest", "Bucharest", "Gaza", "Syria", "Israel",
+    "Ukraine", "Russia", "Iran", "Iraq", "Afghanistan", "Pakistan", "India",
+    "China", "Taiwan", "Sudan", "Yemen", "Lebanon", "Turkey", "Egypt"
 ]
 
 def fetch_news():
@@ -40,7 +41,7 @@ def classify_risk(text):
 
     if any(word in text for word in ["bomb", "explosion", "attack", "terror"]):
         return "HIGH"
-    elif any(word in text for word in ["protest", "clash", "riot"]):
+    elif any(word in text for word in ["protest", "clash", "riot", "unrest"]):
         return "MEDIUM"
     else:
         return "LOW"
@@ -78,16 +79,20 @@ def generate_analyst_assessment(risk_levels):
     return assessment
 
 def extract_location(text):
-    for location in KNOWN_LOCATIONS:
-        if location.lower() in text.lower():
-            return location
-    return None
-
-def geocode_location(location_name):
-    if not location_name:
+    if not text:
         return None
 
-    geolocator = Nominatim(user_agent="osint_threat_monitor")
+    text_lower = text.lower()
+
+    for location in KNOWN_LOCATIONS:
+        if location.lower() in text_lower:
+            return location
+
+    return None
+
+def geocode_location(location_name, geolocator):
+    if not location_name:
+        return None
 
     try:
         location = geolocator.geocode(location_name, timeout=10)
@@ -109,6 +114,9 @@ def generate_brief():
     report = f"GLOBAL INTELLIGENCE BRIEF\nGenerated: {now}\n\n"
     risk_levels = []
     mapped_events = []
+    unmapped_articles = []
+
+    geolocator = Nominatim(user_agent="osint_threat_monitor")
 
     for article in articles[:10]:
         title = article.get("title", "No title")
@@ -120,7 +128,7 @@ def generate_brief():
         risk_levels.append(risk)
 
         found_location = extract_location(combined_text)
-        geo = geocode_location(found_location)
+        geo = geocode_location(found_location, geolocator)
 
         if geo:
             mapped_events.append({
@@ -131,6 +139,13 @@ def generate_brief():
                 "lat": geo["lat"],
                 "lon": geo["lon"]
             })
+        else:
+            unmapped_articles.append({
+                "title": title,
+                "source": source,
+                "risk": risk,
+                "detected_location": found_location if found_location else "None"
+            })
 
         report += f"Title: {title}\n"
         report += f"Source: {source}\n"
@@ -140,4 +155,4 @@ def generate_brief():
         report += "-" * 50 + "\n"
 
     report += generate_analyst_assessment(risk_levels)
-    return report, mapped_events
+    return report, mapped_events, unmapped_articles
