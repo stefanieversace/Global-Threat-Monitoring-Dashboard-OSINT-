@@ -73,15 +73,12 @@ if st.button("Generate Intelligence Brief"):
         st.subheader("Dynamic Global Threat Map")
         threat_map = folium.Map(location=[20, 0], zoom_start=2)
 
-        filtered_events = []
-        for event in mapped_events:
-            if event["risk"] not in selected_risks:
-                continue
+       filtered_events = []
+for event in mapped_events:
+    if event["risk"] not in selected_risks:
+        continue
 
-            if watchlist_terms and not event["watchlist_match"]:
-                continue
-
-            filtered_events.append(event)
+    filtered_events.append(event)
 
             popup_text = (
                 f"<b>{event['title']}</b><br>"
