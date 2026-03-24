@@ -1,4 +1,3 @@
-import os
 import requests
 import streamlit as st
 import pandas as pd
@@ -16,11 +15,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
 HISTORY_FILE = DATA_DIR / "history.csv"
 
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    os.system("python -m spacy download en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm")
 
 REGION_MAP = {
     "Paris": "Europe",
