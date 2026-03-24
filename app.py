@@ -1,29 +1,37 @@
+import streamlit as st
 import folium
 from streamlit.components.v1 import html
-import streamlit as st
 from scripts.threat_monitor import generate_brief
 
 st.set_page_config(page_title="OSINT Threat Monitor", layout="wide")
 
 st.title("🌍 Global OSINT Threat Monitor")
-
 st.markdown("Real-time monitoring of global security threats using open-source intelligence.")
 
 if st.button("Generate Intelligence Brief"):
-    brief = generate_brief()
-    st.text_area("Daily Intelligence Brief", brief, height=500)
-st.subheader("🌍 Global Threat Map")
+    brief, mapped_events = generate_brief()
 
-def show_map():
-    # world map
-    m = folium.Map(location=[20, 0], zoom_start=2)
+    st.subheader("Daily Intelligence Brief")
+    st.text_area("Brief Output", brief, height=500)
 
-    # sample threat locations (you can improve later)
-    folium.Marker([48.8566, 2.3522], popup="Protest Activity - Paris").add_to(m)
-    folium.Marker([40.7128, -74.0060], popup="Security Alert - New York").add_to(m)
-    folium.Marker([33.3152, 44.3661], popup="Conflict Zone - Baghdad").add_to(m)
+    st.subheader("🌍 Dynamic Global Threat Map")
 
-    return m
+    threat_map = folium.Map(location=[20, 0], zoom_start=2)
 
-map_obj = show_map()
-html(map_obj._repr_html_(), height=500)
+    if mapped_events:
+        for event in mapped_events:
+            popup_text = (
+                f"<b>{event['title']}</b><br>"
+                f"Location: {event['location']}<br>"
+                f"Risk: {event['risk']}<br>"
+                f"Source: {event['source']}"
+            )
+
+            folium.Marker(
+                location=[event["lat"], event["lon"]],
+                popup=popup_text
+            ).add_to(threat_map)
+    else:
+        st.info("No article locations could be mapped from the current results.")
+
+    html(threat_map._repr_html_(), height=500)
