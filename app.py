@@ -9,37 +9,40 @@ st.title("🌍 Global OSINT Threat Monitor")
 st.markdown("Real-time monitoring of global security threats using open-source intelligence.")
 
 if st.button("Generate Intelligence Brief"):
-    brief, mapped_events = generate_brief()
+    try:
+        brief, mapped_events = generate_brief()
 
-    st.subheader("Daily Intelligence Brief")
-    st.text_area("Brief Output", brief, height=500)
+        st.subheader("Daily Intelligence Brief")
+        st.text_area("Brief Output", brief, height=500)
 
-    st.subheader("🌍 Dynamic Global Threat Map")
+        st.subheader("🌍 Dynamic Global Threat Map")
+        threat_map = folium.Map(location=[20, 0], zoom_start=2)
 
-    threat_map = folium.Map(location=[20, 0], zoom_start=2)
+        if mapped_events:
+            for event in mapped_events:
+                popup_text = (
+                    f"<b>{event['title']}</b><br>"
+                    f"Location: {event['location']}<br>"
+                    f"Risk: {event['risk']}<br>"
+                    f"Source: {event['source']}"
+                )
 
-    if mapped_events:
-        for event in mapped_events:
-            popup_text = (
-                f"<b>{event['title']}</b><br>"
-                f"Location: {event['location']}<br>"
-                f"Risk: {event['risk']}<br>"
-                f"Source: {event['source']}"
-            )
+                if event["risk"] == "HIGH":
+                    icon_colour = "red"
+                elif event["risk"] == "MEDIUM":
+                    icon_colour = "orange"
+                else:
+                    icon_colour = "green"
 
-            if event["risk"] == "HIGH":
-                icon_colour = "red"
-            elif event["risk"] == "MEDIUM":
-                icon_colour = "orange"
-            else:
-                icon_colour = "green"
+                folium.Marker(
+                    location=[event["lat"], event["lon"]],
+                    popup=folium.Popup(popup_text, max_width=300),
+                    icon=folium.Icon(color=icon_colour)
+                ).add_to(threat_map)
+        else:
+            st.info("No article locations could be mapped from the current results.")
 
-            folium.Marker(
-                location=[event["lat"], event["lon"]],
-                popup=popup_text,
-                icon=folium.Icon(color=icon_colour)
-            ).add_to(threat_map)
-    else:
-        st.info("No article locations could be mapped from the current results.")
+        html(threat_map._repr_html_(), height=500)
 
-    html(threat_map._repr_html_(), height=500)
+    except Exception as e:
+        st.error(f"Error: {e}")
