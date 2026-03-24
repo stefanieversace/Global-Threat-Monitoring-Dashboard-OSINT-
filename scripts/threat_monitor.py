@@ -1,13 +1,31 @@
 import requests
 from datetime import datetime
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 API_KEY = "YOUR_API_KEY_HERE"
 
 KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest"
 
+# Very simple place list to start with
+KNOWN_LOCATIONS = [
+    "Paris", "London", "New York", "Baghdad", "Moscow", "Kyiv", "Jerusalem",
+    "Tel Aviv", "Damascus", "Beirut", "Istanbul", "Cairo", "Tehran", "Delhi",
+    "Mumbai", "Beijing", "Shanghai", "Tokyo", "Seoul", "Hong Kong", "Bangkok",
+    "Manila", "Jakarta", "Sydney", "Melbourne", "Lagos", "Nairobi", "Khartoum",
+    "Tripoli", "Tunis", "Algiers", "Sanaa", "Kabul", "Islamabad", "Karachi",
+    "Mexico City", "Bogota", "Sao Paulo", "Rio de Janeiro", "Buenos Aires",
+    "Santiago", "Caracas", "Lima", "Brussels", "Berlin", "Rome", "Madrid",
+    "Athens", "Warsaw", "Budapest", "Bucharest"
+]
+
 def fetch_news():
-    url = f"https://newsapi.org/v2/everything?q={KEYWORDS}&language=en&sortBy=publishedAt&pageSize=20&apiKey={API_KEY}"
-    response = requests.get(url)
+    url = (
+        f"https://newsapi.org/v2/everything?"
+        f"q={KEYWORDS}&language=en&sortBy=publishedAt&pageSize=20&apiKey={API_KEY}"
+    )
+    response = requests.get(url, timeout=20)
+    response.raise_for_status()
     return response.json().get("articles", [])
 
 def classify_risk(text):
@@ -52,34 +70,79 @@ def generate_analyst_assessment(risk_levels):
 
     return assessment
 
+def extract_location(text):
+    """Very simple location detection using a known city list."""
+    for location in KNOWN_LOCATIONS:
+        if location.lower() in text.lower():
+            return location
+    return None
+
+def geocode_location(location_name):
+    """Convert a place name into coordinates."""
+    if not location_name:
+        return None
+
+    geolocator = Nominatim(user_agent="osint_threat_monitor")
+
+    try:
+        location = geolocator.geocode(location_name, timeout=10)
+        if location:
+            return {
+                "name": location_name,
+                "lat": location.latitude,
+                "lon": location.longitude
+            }
+    except (GeocoderTimedOut, GeocoderServiceError):
+        return None
+
+    return None
+
 def generate_brief():
     articles = fetch_news()
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
     report = f"GLOBAL INTELLIGENCE BRIEF\nGenerated: {now}\n\n"
     risk_levels = []
+    mapped_events = []
 
     for article in articles[:10]:
         title = article.get("title", "No title")
         description = article.get("description", "No description")
         source = article.get("source", {}).get("name", "Unknown")
 
-        risk = classify_risk(title + description)
+        combined_text = f"{title} {description}"
+        risk = classify_risk(combined_text)
         risk_levels.append(risk)
+
+        found_location = extract_location(combined_text)
+        geo = geocode_location(found_location)
+
+        if geo:
+            mapped_events.append({
+                "title": title,
+                "source": source,
+                "risk": risk,
+                "location": geo["name"],
+                "lat": geo["lat"],
+                "lon": geo["lon"]
+            })
 
         report += f"Title: {title}\n"
         report += f"Source: {source}\n"
         report += f"Risk Level: {risk}\n"
         report += f"Summary: {description}\n"
+        report += f"Detected Location: {found_location if found_location else 'Unknown'}\n"
         report += "-" * 50 + "\n"
 
     report += generate_analyst_assessment(risk_levels)
-    return report
+
+    return report, mapped_events
 
 if __name__ == "__main__":
-    brief = generate_brief()
+    brief, mapped_events = generate_brief()
 
     with open("output/daily_brief.txt", "w") as f:
         f.write(brief)
 
     print("Brief generated successfully.")
+    print(f"Mapped events: {len(mapped_events)}")
