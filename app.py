@@ -1,6 +1,7 @@
 import streamlit as st
 import folium
 import pandas as pd
+from folium.plugins import MarkerCluster
 from streamlit.components.v1 import html
 from scripts.threat_monitor import generate_brief, load_history
 
@@ -92,9 +93,7 @@ with st.sidebar:
     max_articles = st.slider("Articles to analyse", 5, 20, 10)
 
     st.markdown("---")
-    st.caption(
-        "Tip: clear the watchlist if you want the fullest map view."
-    )
+    st.caption("Tip: clear the watchlist if you want the fullest map view.")
 
 watchlist_terms = [term.strip() for term in watchlist_input.split(",") if term.strip()]
 
@@ -157,11 +156,13 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             st.subheader("Dynamic Global Threat Map")
 
             threat_map = folium.Map(location=[20, 0], zoom_start=2)
+            marker_cluster = MarkerCluster().add_to(threat_map)
 
             filtered_events = []
             for event in mapped_events:
                 if event["risk"] not in selected_risks:
                     continue
+
                 filtered_events.append(event)
 
                 popup_text = (
@@ -187,7 +188,7 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
                     location=[event["lat"], event["lon"]],
                     popup=folium.Popup(popup_text, max_width=320),
                     icon=folium.Icon(color=icon_colour),
-                ).add_to(threat_map)
+                ).add_to(marker_cluster)
 
             if filtered_events:
                 html(threat_map._repr_html_(), height=560)
