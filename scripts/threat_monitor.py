@@ -43,7 +43,6 @@ REGION_MAP = {
     "Moscow": "Europe",
     "Ukraine": "Europe",
     "Russia": "Europe",
-
     "Jerusalem": "Middle East",
     "Tel Aviv": "Middle East",
     "Damascus": "Middle East",
@@ -66,7 +65,6 @@ REGION_MAP = {
     "Riyadh": "Middle East",
     "Jeddah": "Middle East",
     "Amman": "Middle East",
-
     "Delhi": "Asia-Pacific",
     "Mumbai": "Asia-Pacific",
     "Beijing": "Asia-Pacific",
@@ -86,7 +84,6 @@ REGION_MAP = {
     "Karachi": "Asia-Pacific",
     "Sydney": "Asia-Pacific",
     "Melbourne": "Asia-Pacific",
-
     "New York": "North America",
     "Mexico City": "Latin America",
     "Bogota": "Latin America",
@@ -96,7 +93,6 @@ REGION_MAP = {
     "Santiago": "Latin America",
     "Caracas": "Latin America",
     "Lima": "Latin America",
-
     "Lagos": "Africa",
     "Nairobi": "Africa",
     "Khartoum": "Africa",
@@ -142,10 +138,35 @@ SEVERITY_WEIGHTS = {
     "crisis": 2
 }
 
-
 def ensure_data_dir():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+def load_history():
+    ensure_data_dir()
+
+    if HISTORY_FILE.exists():
+        return pd.read_csv(HISTORY_FILE)
+
+    return pd.DataFrame(columns=["date", "high_count", "medium_count", "low_count", "watchlist_matches"])
+
+def save_history(high_count, medium_count, low_count, watchlist_matches):
+    ensure_data_dir()
+
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    row = pd.DataFrame([{
+        "date": today,
+        "high_count": high_count,
+        "medium_count": medium_count,
+        "low_count": low_count,
+        "watchlist_matches": watchlist_matches
+    }])
+
+    if HISTORY_FILE.exists():
+        existing = pd.read_csv(HISTORY_FILE)
+        combined = pd.concat([existing, row], ignore_index=True)
+        combined.to_csv(HISTORY_FILE, index=False)
+    else:
+        row.to_csv(HISTORY_FILE, index=False)
 
 def fetch_news():
     url = (
@@ -162,7 +183,6 @@ def fetch_news():
 
     return response.json().get("articles", [])
 
-
 def score_risk(text):
     text = (text or "").lower()
     score = 0
@@ -173,7 +193,6 @@ def score_risk(text):
 
     return score
 
-
 def classify_risk(score):
     if score >= 5:
         return "HIGH"
@@ -181,10 +200,8 @@ def classify_risk(score):
         return "MEDIUM"
     return "LOW"
 
-
 def get_source_confidence(source):
     return SOURCE_CONFIDENCE.get(source, "Low")
-
 
 def extract_location(text):
     if not text:
@@ -197,7 +214,6 @@ def extract_location(text):
             return location
 
     return None
-
 
 def geocode_location(location_name, geolocator):
     if not location_name:
@@ -216,12 +232,10 @@ def geocode_location(location_name, geolocator):
 
     return None
 
-
 def get_region(location_name):
     if not location_name:
         return "Unknown"
     return REGION_MAP.get(location_name, "Other")
-
 
 def watchlist_match(text, watchlist_terms):
     if not watchlist_terms:
@@ -229,7 +243,6 @@ def watchlist_match(text, watchlist_terms):
 
     text_lower = (text or "").lower()
     return any(term.lower() in text_lower for term in watchlist_terms)
-
 
 def generate_key_judgements(risk_levels, region_counts, watchlist_matches):
     high_count = risk_levels.count("HIGH")
@@ -255,7 +268,6 @@ def generate_key_judgements(risk_levels, region_counts, watchlist_matches):
         judgements.append("The current reporting picture remains fluid and should be monitored for escalation or geographic spread.")
 
     return judgements[:3]
-
 
 def generate_analyst_assessment(risk_levels, region_counts, watchlist_matches):
     high_count = risk_levels.count("HIGH")
@@ -310,36 +322,6 @@ def generate_analyst_assessment(risk_levels, region_counts, watchlist_matches):
     assessment += "Continue monitoring for escalation, especially in locations with repeated reporting or watchlist relevance.\n"
 
     return assessment
-
-
-def save_history(high_count, medium_count, low_count, watchlist_matches):
-    ensure_data_dir()
-
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    row = pd.DataFrame([{
-        "date": today,
-        "high_count": high_count,
-        "medium_count": medium_count,
-        "low_count": low_count,
-        "watchlist_matches": watchlist_matches
-    }])
-
-    if HISTORY_FILE.exists():
-        existing = pd.read_csv(HISTORY_FILE)
-        combined = pd.concat([existing, row], ignore_index=True)
-        combined.to_csv(HISTORY_FILE, index=False)
-    else:
-        row.to_csv(HISTORY_FILE, index=False)
-
-
-def load_history():
-    ensure_data_dir()
-
-    if HISTORY_FILE.exists():
-        return pd.read_csv(HISTORY_FILE)
-
-    return pd.DataFrame(columns=["date", "high_count", "medium_count", "low_count", "watchlist_matches"])
-
 
 def generate_brief(max_articles=10, watchlist_terms=None):
     if watchlist_terms is None:
