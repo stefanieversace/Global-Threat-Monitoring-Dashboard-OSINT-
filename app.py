@@ -10,7 +10,7 @@ st.markdown("Real-time monitoring of global security threats using open-source i
 
 if st.button("Generate Intelligence Brief"):
     try:
-        brief, mapped_events = generate_brief()
+        brief, mapped_events, unmapped_articles = generate_brief()
 
         st.subheader("Daily Intelligence Brief")
         st.text_area("Brief Output", brief, height=500)
@@ -39,10 +39,18 @@ if st.button("Generate Intelligence Brief"):
                     popup=folium.Popup(popup_text, max_width=300),
                     icon=folium.Icon(color=icon_colour)
                 ).add_to(threat_map)
-        else:
-            st.info("No article locations could be mapped from the current results.")
 
-        html(threat_map._repr_html_(), height=500)
+            html(threat_map._repr_html_(), height=500)
+        else:
+            st.warning("No article locations could be mapped from the current results.")
+
+        if unmapped_articles:
+            st.subheader("Unmapped Articles")
+            for article in unmapped_articles:
+                st.write(
+                    f"**{article['title']}** | Source: {article['source']} | "
+                    f"Risk: {article['risk']} | Detected location: {article['detected_location']}"
+                )
 
     except Exception as e:
         st.error(f"Error: {e}")
