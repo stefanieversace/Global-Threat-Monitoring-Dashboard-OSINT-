@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from geopy.extra.rate_limiter import RateLimiter
 import spacy
 
 API_KEY = st.secrets["NEWS_API_KEY"]
@@ -14,6 +14,7 @@ KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest OR violence OR 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
 HISTORY_FILE = DATA_DIR / "history.csv"
+GEOCODE_CACHE_FILE = DATA_DIR / "geocode_cache.csv"
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -178,6 +179,26 @@ def save_history(high_count, medium_count, low_count, watchlist_matches):
         row.to_csv(HISTORY_FILE, index=False)
 
 
+def load_geocode_cache():
+    ensure_data_dir()
+    if GEOCODE_CACHE_FILE.exists():
+        df = pd.read_csv(GEOCODE_CACHE_FILE)
+        return {
+            row["location"]: {"name": row["location"], "lat": row["lat"], "lon": row["lon"]}
+            for _, row in df.iterrows()
+        }
+    return {}
+
+
+def save_geocode_cache(cache):
+    ensure_data_dir()
+    rows = [
+        {"location": key, "lat": value["lat"], "lon": value["lon"]}
+        for key, value in cache.items()
+    ]
+    pd.DataFrame(rows).to_csv(GEOCODE_CACHE_FILE, index=False)
+
+
 def fetch_news():
     url = (
         f"https://newsapi.org/v2/everything?"
@@ -197,11 +218,9 @@ def fetch_news():
 def score_risk(text):
     text = (text or "").lower()
     score = 0
-
     for term, weight in SEVERITY_WEIGHTS.items():
         if term in text:
             score += weight
-
     return score
 
 
@@ -223,21 +242,18 @@ def extract_location(text):
 
     doc = nlp(text)
 
-    # Prefer geopolitical entities first
     for ent in doc.ents:
         if ent.label_ == "GPE":
             cleaned = ent.text.strip()
             if cleaned:
                 return cleaned
 
-    # Then broader location entities
     for ent in doc.ents:
         if ent.label_ == "LOC":
             cleaned = ent.text.strip()
             if cleaned:
                 return cleaned
 
-    # Fallback to keyword matching
     text_lower = text.lower()
     for location in FALLBACK_LOCATIONS:
         if location.lower() in text_lower:
@@ -246,24 +262,22 @@ def extract_location(text):
     return None
 
 
-def geocode_location(location_name, geolocator):
+def geocode_location(location_name, geocode_func, cache):
     if not location_name:
         return None
 
-    try:
-        location = geolocator.geocode(
-            location_name,
-            timeout=10,
-            exactly_one=True
-        )
-        if location:
-            return {
-                "name": location_name,
-                "lat": location.latitude,
-                "lon": location.longitude
-            }
-    except (GeocoderTimedOut, GeocoderServiceError, Exception):
-        return None
+    if location_name in cache:
+        return cache[location_name]
+
+    location = geocode_func(location_name)
+    if location:
+        result = {
+            "name": location_name,
+            "lat": location.latitude,
+            "lon": location.longitude
+        }
+        cache[location_name] = result
+        return result
 
     return None
 
@@ -392,7 +406,15 @@ def generate_brief(max_articles=10, watchlist_terms=None):
     region_counts = {}
     watchlist_matches = 0
 
-    geolocator = Nominatim(user_agent="osint_threat_monitor")
+    geolocator = Nominatim(user_agent="stefanie_osint_threat_monitor")
+    geocode_func = RateLimiter(
+        geolocator.geocode,
+        min_delay_seconds=1.1,
+        max_retries=2,
+        error_wait_seconds=2.0,
+        swallow_exceptions=True
+    )
+    geocode_cache = load_geocode_cache()
 
     for article in articles[:max_articles]:
         title = article.get("title", "No title")
@@ -409,7 +431,7 @@ def generate_brief(max_articles=10, watchlist_terms=None):
 
         found_location = extract_location(combined_text)
         region = get_region(found_location)
-        geo = geocode_location(found_location, geolocator)
+        geo = geocode_location(found_location, geocode_func, geocode_cache)
         is_watchlist_match = watchlist_match(combined_text, watchlist_terms)
 
         if is_watchlist_match:
@@ -458,6 +480,8 @@ def generate_brief(max_articles=10, watchlist_terms=None):
         report += f"Published: {published_at}\n"
         report += f"URL: {url}\n"
         report += "-" * 50 + "\n"
+
+    save_geocode_cache(geocode_cache)
 
     key_judgements = generate_key_judgements(risk_levels, region_counts, watchlist_matches)
     report += "\nTOP 3 KEY JUDGEMENTS:\n\n"
