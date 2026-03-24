@@ -12,10 +12,40 @@ st.caption("Open-source intelligence dashboard for real-time threat monitoring, 
 with st.sidebar:
     st.header("Dashboard Controls")
 
-    selected_risks = st.multiselect(
-        "Filter by risk level",
-        ["HIGH", "MEDIUM", "LOW"],
-        default=["HIGH", "MEDIUM", "LOW"]
+           st.subheader("Dynamic Global Threat Map")
+        threat_map = folium.Map(location=[20, 0], zoom_start=2)
+
+        filtered_events = []
+        for event in mapped_events:
+            if event["risk"] not in selected_risks:
+                continue
+
+            filtered_events.append(event)
+
+            popup_text = (
+                f"<b>{event['title']}</b><br>"
+                f"Location: {event['location']}<br>"
+                f"Region: {event['region']}<br>"
+                f"Risk: {event['risk']}<br>"
+                f"Score: {event['score']}<br>"
+                f"Confidence: {event['confidence']}<br>"
+                f"Source: {event['source']}<br>"
+                f"Published: {event['published_at']}<br>"
+                f"<a href='{event['url']}' target='_blank'>Open article</a>"
+            )
+
+            if event["risk"] == "HIGH":
+                icon_colour = "red"
+            elif event["risk"] == "MEDIUM":
+                icon_colour = "orange"
+            else:
+                icon_colour = "green"
+
+            folium.Marker(
+                location=[event["lat"], event["lon"]],
+                popup=folium.Popup(popup_text, max_width=320),
+                icon=folium.Icon(color=icon_colour)
+            ).add_to(threat_map)
     )
 
     watchlist_input = st.text_input(
