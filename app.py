@@ -34,7 +34,6 @@ if st.button("Generate Intelligence Brief"):
             watchlist_terms=watchlist_terms
         )
 
-        # Top alerts
         if summary["high_count"] >= 3:
             st.error("Alert: Multiple high-risk incidents identified in current reporting.")
         elif summary["watchlist_matches"] > 0:
@@ -42,7 +41,6 @@ if st.button("Generate Intelligence Brief"):
         else:
             st.success("No major alert threshold triggered in current reporting.")
 
-        # Metrics
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("High Risk", summary["high_count"])
         col2.metric("Medium Risk", summary["medium_count"])
