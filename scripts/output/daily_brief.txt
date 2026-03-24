@@ -1,0 +1,14 @@
+GLOBAL INTELLIGENCE BRIEF
+Generated: 2026-01-01 12:00 UTC
+
+Title: Protests erupt in major European city
+Source: BBC News
+Risk Level: MEDIUM
+Summary: Demonstrations escalated due to economic tensions
+--------------------------------------------------
+
+Title: Explosion reported in regional conflict zone
+Source: Reuters
+Risk Level: HIGH
+Summary: Authorities investigating possible terrorist involvement
+--------------------------------------------------
