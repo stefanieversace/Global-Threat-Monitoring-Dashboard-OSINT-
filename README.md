@@ -1,28 +1,175 @@
-OSINT Global Threat Monitor
+# 🌍 Global OSINT Threat Monitoring Dashboard
 
-This project simulates the workflow of an Intelligence Analyst within a Global Security Operations Centre (GSOC), focusing on real-time threat monitoring and analysis using open-source intelligence (OSINT).
+A real-time Open-Source Intelligence (OSINT) dashboard that monitors global security events, assesses risk levels, and visualises threats on a dynamic world map.
 
-Overview
+Built to simulate workflows used in global intelligence and security operations centres.
 
-The system collects global news data and applies keyword-based filtering and risk classification to identify potential security threats, including:
+---
 
-Terrorism
-Civil unrest & protests
-Geopolitical instability
-Emerging global risks
+## 🚀 Live Demo
 
-It then generates a structured Daily Intelligence Brief, similar to those used in corporate security and crisis response environments.
+👉 https://stefanieversace-global-threat-monitoring-dashboard-o-app-as1ple.streamlit.app/
 
-Features
-Real-time OSINT data collection (News API)
-Threat detection using keyword analysis
-Automated risk classification (High / Medium / Low)
-Intelligence brief generation
-Interactive dashboard (Streamlit)
+---
 
-Skills Demonstrated
-Open-Source Intelligence (OSINT)
-Threat & Risk Analysis
-Intelligence Reporting & Briefing
-Data Collection & Filtering
-Python for Security Applications
+## 🧠 Overview
+
+This project collects and analyses open-source news data to:
+
+* Identify emerging global security threats
+* Classify incidents by risk severity
+* Extract geographic locations using NLP
+* Visualise incidents on a global map
+* Generate structured intelligence briefings
+* Highlight key trends and analyst judgements
+
+---
+
+## ⚙️ Features
+
+### 🔍 Intelligence Collection
+
+* Pulls real-time data from NewsAPI
+* Filters for relevant security-related keywords
+
+### 🧠 Risk Analysis
+
+* Severity scoring model based on weighted keywords
+* Classification into HIGH / MEDIUM / LOW risk
+
+### 📍 Geospatial Mapping
+
+* Uses NLP (spaCy) to extract locations from text
+* Converts locations into coordinates using geocoding
+* Displays incidents on an interactive map
+
+### 📊 Dashboard & Insights
+
+* Risk summary metrics
+* Regional breakdown of incidents
+* Trend tracking over time
+* Watchlist filtering for custom monitoring
+
+### 📝 Analyst Output
+
+* Auto-generated intelligence brief
+* Top 3 key judgements
+* Operational assessment and recommendations
+
+---
+
+## 🏗️ Tech Stack
+
+* Python
+* Streamlit
+* spaCy (NLP)
+* Folium (mapping)
+* Pandas
+* Geopy
+* NewsAPI
+
+---
+
+## 📂 Project Structure
+
+```
+osint-threat-monitor/
+│── app.py
+│── scripts/
+│   ├── threat_monitor.py
+│   └── __init__.py
+│── data/
+│   └── history.csv
+│── requirements.txt
+│── README.md
+```
+
+---
+
+## ⚡ How It Works
+
+1. Fetches latest global news articles
+2. Applies keyword-based filtering for security relevance
+3. Scores each article using a severity model
+4. Extracts geographic entities using NLP
+5. Maps incidents using geocoding
+6. Generates structured intelligence outputs
+
+---
+
+## 🔐 Setup Instructions
+
+### 1. Clone the repository
+
+```
+git clone https://github.com/yourusername/your-repo-name.git
+cd your-repo-name
+```
+
+### 2. Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+### 3. Download NLP model
+
+```
+python -m spacy download en_core_web_sm
+```
+
+### 4. Add API key
+
+Create a `.streamlit/secrets.toml` file:
+
+```
+NEWS_API_KEY = "your_api_key_here"
+```
+
+### 5. Run the app
+
+```
+streamlit run app.py
+```
+
+---
+
+## 📈 Example Use Cases
+
+* Monitoring global security risks
+* Supporting executive travel risk assessments
+* Identifying emerging geopolitical threats
+* Demonstrating OSINT and intelligence analysis capabilities
+
+---
+
+## 🎯 Key Skills Demonstrated
+
+* Open-source intelligence (OSINT)
+* Threat and risk assessment
+* NLP-based entity extraction
+* Data analysis and visualisation
+* Intelligence reporting and structured analysis
+
+---
+
+## 🔮 Future Improvements
+
+* Multi-location extraction per article
+* Real-time alert notifications
+* Integration with social media intelligence
+* Enhanced NLP for more accurate entity detection
+* API expansion beyond NewsAPI
+
+---
+
+## 👩‍💻 Author
+
+Stefanie Versace
+https://www.linkedin.com/in/stefanie-versace-26766428a
+
+---
+
+## 📌 Notes
+
+This project is designed as a portfolio demonstration of intelligence analysis workflows and does not represent a production-grade threat intelligence system.
