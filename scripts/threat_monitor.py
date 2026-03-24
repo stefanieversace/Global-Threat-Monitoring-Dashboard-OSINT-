@@ -1,9 +1,10 @@
 import requests
+import streamlit as st
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
-API_KEY = "YOUR_API_KEY_HERE"
+API_KEY = st.secrets["NEWS_API_KEY"]
 
 KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest"
 
@@ -23,8 +24,14 @@ def fetch_news():
         f"https://newsapi.org/v2/everything?"
         f"q={KEYWORDS}&language=en&sortBy=publishedAt&pageSize=20&apiKey={API_KEY}"
     )
+
     response = requests.get(url, timeout=20)
-    response.raise_for_status()
+
+    if response.status_code != 200:
+        raise Exception(
+            f"News API request failed. Status: {response.status_code}. Response: {response.text}"
+        )
+
     return response.json().get("articles", [])
 
 def classify_risk(text):
@@ -133,12 +140,3 @@ def generate_brief():
 
     report += generate_analyst_assessment(risk_levels)
     return report, mapped_events
-
-if __name__ == "__main__":
-    brief, mapped_events = generate_brief()
-
-    with open("output/daily_brief.txt", "w") as f:
-        f.write(brief)
-
-    print("Brief generated successfully.")
-    print(f"Mapped events: {len(mapped_events)}")
