@@ -48,3 +48,35 @@ if __name__ == "__main__":
         f.write(brief)
     
     print("Brief generated successfully.")
+
+def generate_analyst_assessment(risk_levels):
+    high_count = risk_levels.count("HIGH")
+    medium_count = risk_levels.count("MEDIUM")
+    low_count = risk_levels.count("LOW")
+
+    assessment = "\nANALYST ASSESSMENT:\n\n"
+
+    if high_count > 0:
+        assessment += (
+            "Current reporting indicates elevated threat activity, including at least one high-risk incident. "
+            "This suggests a need for close monitoring of fast-moving developments.\n\n"
+        )
+    elif medium_count > 0:
+        assessment += (
+            "Current reporting indicates ongoing unrest and protest activity. "
+            "While no immediate high-risk pattern dominates reporting, the situation may escalate quickly.\n\n"
+        )
+    else:
+        assessment += (
+            "Current reporting suggests a low immediate threat environment, though monitoring should continue for changes.\n\n"
+        )
+
+    assessment += "Key trends:\n"
+    assessment += f"- High-risk incidents: {high_count}\n"
+    assessment += f"- Medium-risk incidents: {medium_count}\n"
+    assessment += f"- Low-risk incidents: {low_count}\n\n"
+
+    assessment += "Recommendation:\n"
+    assessment += "Continue monitoring for escalation, especially in locations with repeated reporting.\n"
+
+    return assessment
