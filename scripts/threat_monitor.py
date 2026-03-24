@@ -17,6 +17,23 @@ HISTORY_FILE = DATA_DIR / "history.csv"
 
 nlp = spacy.load("en_core_web_sm")
 
+FALLBACK_LOCATIONS = [
+    "Paris", "London", "New York", "Washington", "Los Angeles",
+    "Baghdad", "Moscow", "Kyiv", "Jerusalem", "Tel Aviv", "Damascus",
+    "Beirut", "Istanbul", "Cairo", "Tehran", "Delhi", "Mumbai",
+    "Beijing", "Shanghai", "Tokyo", "Seoul", "Hong Kong", "Bangkok",
+    "Manila", "Jakarta", "Sydney", "Melbourne", "Lagos", "Nairobi",
+    "Khartoum", "Tripoli", "Tunis", "Algiers", "Sanaa", "Kabul",
+    "Islamabad", "Karachi", "Mexico City", "Bogota", "Sao Paulo",
+    "Rio de Janeiro", "Buenos Aires", "Santiago", "Caracas", "Lima",
+    "Brussels", "Berlin", "Rome", "Madrid", "Athens", "Warsaw",
+    "Budapest", "Bucharest", "Gaza", "Syria", "Israel", "Ukraine",
+    "Russia", "Iran", "Iraq", "Afghanistan", "Pakistan", "India",
+    "China", "Taiwan", "Sudan", "Yemen", "Lebanon", "Turkey",
+    "Egypt", "West Bank", "Ramallah", "Doha", "Dubai", "Riyadh",
+    "Jeddah", "Amman"
+]
+
 REGION_MAP = {
     "Paris": "Europe",
     "London": "Europe",
@@ -136,10 +153,8 @@ def ensure_data_dir():
 
 def load_history():
     ensure_data_dir()
-
     if HISTORY_FILE.exists():
         return pd.read_csv(HISTORY_FILE)
-
     return pd.DataFrame(columns=["date", "high_count", "medium_count", "low_count", "watchlist_matches"])
 
 
@@ -208,9 +223,25 @@ def extract_location(text):
 
     doc = nlp(text)
 
+    # Prefer geopolitical entities first
     for ent in doc.ents:
-        if ent.label_ in ["GPE", "LOC"]:
-            return ent.text
+        if ent.label_ == "GPE":
+            cleaned = ent.text.strip()
+            if cleaned:
+                return cleaned
+
+    # Then broader location entities
+    for ent in doc.ents:
+        if ent.label_ == "LOC":
+            cleaned = ent.text.strip()
+            if cleaned:
+                return cleaned
+
+    # Fallback to keyword matching
+    text_lower = text.lower()
+    for location in FALLBACK_LOCATIONS:
+        if location.lower() in text_lower:
+            return location
 
     return None
 
@@ -220,14 +251,18 @@ def geocode_location(location_name, geolocator):
         return None
 
     try:
-        location = geolocator.geocode(location_name, timeout=10)
+        location = geolocator.geocode(
+            location_name,
+            timeout=10,
+            exactly_one=True
+        )
         if location:
             return {
                 "name": location_name,
                 "lat": location.latitude,
                 "lon": location.longitude
             }
-    except (GeocoderTimedOut, GeocoderServiceError):
+    except (GeocoderTimedOut, GeocoderServiceError, Exception):
         return None
 
     return None
@@ -259,21 +294,31 @@ def generate_key_judgements(risk_levels, region_counts, watchlist_matches):
     judgements = []
 
     if medium_count > high_count and medium_count > 0:
-        judgements.append("Current reporting is primarily driven by protest, unrest, and lower-intensity disruptive activity.")
+        judgements.append(
+            "Current reporting is primarily driven by protest, unrest, and lower-intensity disruptive activity."
+        )
     elif high_count > 0:
-        judgements.append("Current reporting includes at least one high-severity incident with potential operational relevance.")
+        judgements.append(
+            "Current reporting includes at least one high-severity incident with potential operational relevance."
+        )
 
     if region_counts:
         top_region = max(region_counts, key=region_counts.get)
-        judgements.append(f"Reporting is most concentrated in {top_region}, indicating a possible regional clustering of incidents.")
+        judgements.append(
+            f"Reporting is most concentrated in {top_region}, indicating a possible regional clustering of incidents."
+        )
 
     if watchlist_matches > 0:
-        judgements.append("Watchlist-matched reporting is present in current results and may warrant prioritised monitoring.")
+        judgements.append(
+            "Watchlist-matched reporting is present in current results and may warrant prioritised monitoring."
+        )
     else:
         judgements.append("No watchlist terms were matched in current reporting.")
 
     while len(judgements) < 3:
-        judgements.append("The current reporting picture remains fluid and should be monitored for escalation or geographic spread.")
+        judgements.append(
+            "The current reporting picture remains fluid and should be monitored for escalation or geographic spread."
+        )
 
     return judgements[:3]
 
