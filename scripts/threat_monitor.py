@@ -4,6 +4,7 @@ from datetime import datetime
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
+import streamlit as st
 API_KEY = st.secrets["NEWS_API_KEY"]
 
 KEYWORDS = "terrorism OR protest OR conflict OR attack OR unrest"
