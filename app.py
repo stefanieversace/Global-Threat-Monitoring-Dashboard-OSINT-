@@ -12,6 +12,7 @@ import pydeck as pdk
 import requests
 import streamlit as st
 
+NEWSAPI_KEY = st.secrets.get("NEWSAPI_KEY") or os.getenv("NEWSAPI_KEY")
 
 # =========================================================
 # PAGE CONFIG
@@ -211,7 +212,6 @@ st.markdown(
 # =========================================================
 # CONFIG / ENV
 # =========================================================
-API_KEY = st.secrets.get("NEWSAPI_KEY") or os.getenv("NEWSAPI_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 
