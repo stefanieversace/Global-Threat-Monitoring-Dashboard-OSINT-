@@ -1,17 +1,20 @@
-st.subheader("🌍 Live Map")
+import streamlit as st
+import pandas as pd
 
-map_df = df.copy()
+st.title("MAP FIX TEST")
 
-# 🔥 FORCE CORRECT TYPES
-map_df["latitude"] = pd.to_numeric(map_df["lat"], errors="coerce")
-map_df["longitude"] = pd.to_numeric(map_df["lon"], errors="coerce")
+df = pd.DataFrame({
+    "lat": [51.5074, 40.7128],
+    "lon": [-0.1278, -74.0060]
+})
 
-# 🔥 DEBUG (leave this in for now)
-st.write("DATA TYPES:")
+# 🔥 FORCE CORRECT FORMAT
+map_df = pd.DataFrame({
+    "latitude": pd.to_numeric(df["lat"], errors="coerce"),
+    "longitude": pd.to_numeric(df["lon"], errors="coerce"),
+})
+
 st.write(map_df.dtypes)
+st.write(map_df)
 
-st.write("MAP DATA:")
-st.write(map_df[["latitude", "longitude"]])
-
-# 🔥 ONLY pass clean columns
-st.map(map_df[["latitude", "longitude"]])
+st.map(map_df)
