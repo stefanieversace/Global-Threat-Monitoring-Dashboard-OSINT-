@@ -174,24 +174,35 @@ div[data-testid="stSidebar"] {
     border-right: 1px solid rgba(255,255,255,0.06);
 }
 
-.stTextInput > div > div > input,
-.stSelectbox > div > div,
-.stMultiSelect > div > div,
-.stTextArea textarea {
-    background-color: rgba(255,255,255,0.03) !important;
-    color: white !important;
-    border-radius: 14px !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
+st.subheader("🧠 Intelligence Brief")
+
+brief_text = build_brief(filtered_df)
+
+st.markdown(f"""
+<div style="
+    background: linear-gradient(180deg, rgba(18,24,38,0.96), rgba(10,15,25,0.96));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 20px;
+    max-height: 420px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: 'SF Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #e8edff;
+">
+{brief_text}
+</div>
+""", unsafe_allow_html=True)
 }
 
-.stDownloadButton button,
-.stButton button {
-    background: linear-gradient(180deg, #8ea8ff, #6d8fff) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 14px !important;
-    font-weight: 700 !important;
-    padding: 0.6rem 1rem !important;
+st.download_button(
+    label="⬇ Download Intelligence Brief",
+    data=brief_text,
+    file_name="intelligence_brief.txt",
+    mime="text/plain"
+)
 }
 
 .stTabs [data-baseweb="tab-list"] {
