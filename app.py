@@ -173,13 +173,12 @@ div[data-testid="stSidebar"] {
     background: linear-gradient(180deg, rgba(10,14,24,0.98), rgba(8,11,20,0.98));
     border-right: 1px solid rgba(255,255,255,0.06);
 }
-
 st.subheader("🧠 Intelligence Brief")
 
 brief_text = build_brief(filtered_df)
 
 st.markdown(f"""
-<div style="
+<div style='
     background: linear-gradient(180deg, rgba(18,24,38,0.96), rgba(10,15,25,0.96));
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 20px;
@@ -187,11 +186,11 @@ st.markdown(f"""
     max-height: 420px;
     overflow-y: auto;
     white-space: pre-wrap;
-    font-family: 'SF Mono', monospace;
+    font-family: monospace;
     font-size: 13.5px;
     line-height: 1.6;
     color: #e8edff;
-">
+'>
 {brief_text}
 </div>
 """, unsafe_allow_html=True)
