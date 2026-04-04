@@ -4,3 +4,5 @@ folium
 requests
 openai
 spacy
+pydeck
+numpy
