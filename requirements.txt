@@ -7,3 +7,4 @@ spacy
 pydeck
 numpy
 plotly
+streamlit-folium
