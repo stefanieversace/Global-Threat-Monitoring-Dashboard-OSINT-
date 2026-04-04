@@ -14,25 +14,24 @@ from streamlit_folium import st_folium
 # =========================================================
 st.markdown("""
 <div style="
-    font-size: 42px;
-    font-weight: 800;
+    font-size: 34px;
+    font-weight: 700;
     text-align: center;
-    margin-bottom: 5px;
-    white-space: normal;
-    line-height: 1.2;
+    margin-bottom: 4px;
 ">
-🌍 Global Threat Monitoring Dashboard
+Global Threat Monitor
 </div>
 
 <div style="
     text-align: center;
     color: #9fb0cf;
-    font-size: 16px;
+    font-size: 14px;
     margin-bottom: 25px;
 ">
-Executive-grade OSINT monitoring • SOC-style intelligence workflows
+Real-time intelligence • Threat detection • Analyst workflows
 </div>
 """, unsafe_allow_html=True)
+
 )
 
 # =========================================================
