@@ -13,9 +13,19 @@ from streamlit_folium import st_folium
 # PAGE CONFIG
 # =========================================================
 # =========================
-# HEADER (FIXED - NO ERRORS)
-# =========================
+st.set_page_config(page_title="Global Threat Monitor", layout="wide")
 
+# Hide Streamlit header
+st.markdown("""
+<style>
+header {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+# Add spacing so title is not cut off
+st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
+
+# Title
 st.markdown(
     """
     <div style="
@@ -39,7 +49,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 
 # =========================================================
 # STYLING
