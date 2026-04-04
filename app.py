@@ -1,4 +1,6 @@
+import math
 import random
+import time
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -23,9 +25,9 @@ st.set_page_config(
 CUSTOM_CSS = """
 <style>
 :root {
-    --bg: #0a0d12;
-    --panel: rgba(17, 23, 31, 0.82);
-    --panel-2: rgba(23, 30, 40, 0.90);
+    --bg: #070b10;
+    --panel: rgba(12, 17, 24, 0.88);
+    --panel-2: rgba(17, 23, 31, 0.92);
     --border: rgba(255,255,255,0.08);
     --text: #e8edf3;
     --muted: #93a1b3;
@@ -43,9 +45,9 @@ CUSTOM_CSS = """
 
 html, body, .stApp {
     background:
-        radial-gradient(circle at top left, rgba(95,143,255,0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(141,183,255,0.10), transparent 22%),
-        linear-gradient(180deg, #07090d 0%, #0a0d12 100%);
+        radial-gradient(circle at top left, rgba(95,143,255,0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(141,183,255,0.08), transparent 22%),
+        linear-gradient(180deg, #05080c 0%, #0a0d12 100%);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
 }
@@ -53,7 +55,7 @@ html, body, .stApp {
 .block-container {
     padding-top: 1.2rem;
     padding-bottom: 2rem;
-    max-width: 1600px;
+    max-width: 1680px;
 }
 
 #MainMenu, header, footer {visibility: hidden;}
@@ -97,11 +99,11 @@ div[data-testid="stMetricValue"] {
 
 .hero {
     background:
-        linear-gradient(135deg, rgba(95,143,255,0.18), rgba(255,255,255,0.02)),
-        rgba(15, 20, 28, 0.86);
-    border: 1px solid rgba(141,183,255,0.18);
+        linear-gradient(135deg, rgba(95,143,255,0.12), rgba(255,255,255,0.01)),
+        rgba(8, 12, 18, 0.92);
+    border: 1px solid rgba(141,183,255,0.16);
     border-radius: 26px;
-    padding: 22px 24px;
+    padding: 24px 26px;
     box-shadow: var(--shadow);
     overflow: hidden;
     position: relative;
@@ -113,7 +115,7 @@ div[data-testid="stMetricValue"] {
     inset: -20% auto auto -10%;
     width: 360px;
     height: 360px;
-    background: radial-gradient(circle, rgba(141,183,255,0.16), transparent 68%);
+    background: radial-gradient(circle, rgba(141,183,255,0.14), transparent 68%);
     pointer-events: none;
 }
 
@@ -127,7 +129,7 @@ div[data-testid="stMetricValue"] {
 }
 
 .hero-title {
-    font-size: 2rem;
+    font-size: 2.15rem;
     font-weight: 800;
     line-height: 1.05;
     margin-bottom: 0.45rem;
@@ -181,7 +183,7 @@ div[data-testid="stMetricValue"] {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    background: rgba(255,255,255,0.025);
+    background: rgba(255,255,255,0.018);
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 12px 14px;
@@ -271,7 +273,7 @@ div[data-testid="stMetricValue"] {
 .log-mid { color: #c5a3ff; }
 
 .actor-card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.012));
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 18px;
     padding: 16px;
@@ -670,15 +672,153 @@ def build_mitre_matrix(df: pd.DataFrame) -> pd.DataFrame:
         row = {t: actor_tactics.count(t) for t in tactics}
         row["Severity"] = sev
         rows.append(row)
-    mitre_df = pd.DataFrame(rows).set_index("Severity")
-    return mitre_df
+    return pd.DataFrame(rows).set_index("Severity")
+
+
+def generate_live_alert():
+    title = random.choice(list(MITRE_TECHNIQUES.keys()))
+    severity = random.choice(["Low", "Medium", "High", "Critical"])
+    region = random.choice([
+        "New York, US",
+        "London, UK",
+        "Berlin, DE",
+        "Singapore, SG",
+        "Sydney, AU",
+        "Paris, FR",
+        "Dublin, IE",
+        "San Francisco, US",
+    ])
+    return {
+        "time": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+        "alert": title,
+        "severity": severity,
+        "region": region,
+    }
+
+
+def severity_to_color(sev: str):
+    return {
+        "Critical": [255, 50, 80, 220],
+        "High": [255, 120, 60, 215],
+        "Medium": [255, 200, 80, 205],
+        "Low": [100, 255, 180, 195],
+    }.get(sev, [141, 183, 255, 200])
+
+
+def build_graph_data(df: pd.DataFrame):
+    nodes = []
+    edges = []
+    seen_nodes = set()
+
+    incident_positions = {}
+    actor_positions = {}
+    ioc_positions = {}
+
+    incident_count = len(df)
+    incident_radius = 1.3
+    actor_radius = 0.7
+    ioc_radius = 2.0
+
+    incident_angles = np.linspace(0, 2 * np.pi, incident_count, endpoint=False)
+
+    for idx, (_, row) in enumerate(df.iterrows()):
+        incident_id = row["incident_id"]
+        actor = ACTOR_LIBRARY[row["title"]]["actor"]
+        iocs = ACTOR_LIBRARY[row["title"]]["ioc"]
+        sev = row["severity"]
+
+        incident_x = incident_radius * np.cos(incident_angles[idx])
+        incident_y = incident_radius * np.sin(incident_angles[idx])
+        incident_positions[incident_id] = (incident_x, incident_y)
+
+        if incident_id not in seen_nodes:
+            nodes.append({
+                "id": incident_id,
+                "label": incident_id,
+                "node_type": "incident",
+                "x": incident_x,
+                "y": incident_y,
+                "color": severity_to_color(sev),
+                "radius": 18000,
+                "tooltip": f"{incident_id}\\n{row['title']}\\n{row['region']}\\nSeverity: {sev}",
+            })
+            seen_nodes.add(incident_id)
+
+        if actor not in actor_positions:
+            angle = (idx / max(1, incident_count)) * 2 * np.pi + 0.25
+            actor_x = actor_radius * np.cos(angle)
+            actor_y = actor_radius * np.sin(angle)
+            actor_positions[actor] = (actor_x, actor_y)
+
+        if actor not in seen_nodes:
+            ax, ay = actor_positions[actor]
+            nodes.append({
+                "id": actor,
+                "label": actor,
+                "node_type": "actor",
+                "x": ax,
+                "y": ay,
+                "color": [141, 183, 255, 220],
+                "radius": 14000,
+                "tooltip": f"{actor}\\nThreat actor profile",
+            })
+            seen_nodes.add(actor)
+
+        edges.append({
+            "source": list(actor_positions[actor]),
+            "target": [incident_x, incident_y],
+            "color": [141, 183, 255, 120],
+            "width": 3,
+        })
+
+        for i, ioc in enumerate(iocs):
+            if ioc not in ioc_positions:
+                angle = ((idx + i + 1) / max(1, incident_count + 3)) * 2 * np.pi
+                ioc_x = ioc_radius * np.cos(angle)
+                ioc_y = ioc_radius * np.sin(angle)
+                ioc_positions[ioc] = (ioc_x, ioc_y)
+
+            if ioc not in seen_nodes:
+                ix, iy = ioc_positions[ioc]
+                nodes.append({
+                    "id": ioc,
+                    "label": ioc,
+                    "node_type": "ioc",
+                    "x": ix,
+                    "y": iy,
+                    "color": [255, 191, 105, 210],
+                    "radius": 10000,
+                    "tooltip": f"{ioc}\\nIOC",
+                })
+                seen_nodes.add(ioc)
+
+            edges.append({
+                "source": list(ioc_positions[ioc]),
+                "target": [incident_x, incident_y],
+                "color": [255, 191, 105, 100],
+                "width": 2,
+            })
+
+    return pd.DataFrame(nodes), pd.DataFrame(edges)
+
+
+def generate_ai_assessment(incident: pd.Series) -> str:
+    actor = ACTOR_LIBRARY[incident["title"]]
+    return (
+        f"{incident['incident_id']} is currently assessed as a {incident['severity'].lower()} priority event. "
+        f"The pattern is most consistent with {incident['title'].lower()} activity affecting {incident['entities']} in {incident['region']}. "
+        f"Observed telemetry from {incident['source']} aligns with MITRE techniques {', '.join(incident['mitre'])}. "
+        f"Linked enrichment suggests overlap with the {actor['actor']} profile. "
+        f"Immediate focus should remain on scoping affected identities/assets, validating whether access is ongoing, "
+        f"and preserving a clear path to containment if the event expands."
+    )
 
 
 INCIDENTS = generate_incidents()
 MITRE_MATRIX = build_mitre_matrix(INCIDENTS)
 
 # =========================================================
-# STATE
+# SESSION STATE
 # =========================================================
 if "selected_incident_id" not in st.session_state:
     st.session_state.selected_incident_id = INCIDENTS.iloc[0]["incident_id"]
@@ -686,6 +826,11 @@ if "selected_incident_id" not in st.session_state:
 if "escalation_log" not in st.session_state:
     st.session_state.escalation_log = []
 
+if "live_alerts" not in st.session_state:
+    st.session_state.live_alerts = []
+
+if "graph_focus" not in st.session_state:
+    st.session_state.graph_focus = None
 
 # =========================================================
 # HELPERS
@@ -730,31 +875,80 @@ def filtered_incidents(df: pd.DataFrame, severities: list[str], sources: list[st
     return out.sort_values(["sev_rank", "risk_score"], ascending=[False, False]).reset_index(drop=True)
 
 
+# =========================================================
+# RENDERERS
+# =========================================================
 def render_hero(df: pd.DataFrame) -> None:
     now_utc = datetime.now(timezone.utc).strftime("%d %b %Y • %H:%M UTC")
     critical_count = int((df["severity"] == "Critical").sum())
     high_count = int((df["severity"] == "High").sum())
+
     st.markdown(
         f"""
         <div class="hero">
-            <div class="eyebrow">Threat Operations Platform</div>
-            <div class="hero-title">Global incident awareness with analyst-grade drill-down</div>
+            <div class="eyebrow">GOTHAM // THREAT COMMAND</div>
+            <div class="hero-title">Global Intelligence Surface</div>
             <div class="hero-sub">
-                Correlated signals from identity, endpoint, cloud, network, and OSINT sources. Built to feel like a real
-                internal investigation product: triage queue, map-driven context, MITRE enrichment, timeline reasoning,
-                and escalation actions.
+                A live investigation workspace for correlated identity, endpoint, network, cloud, and OSINT detections.
+                Built to feel like a real internal threat operations system with triage, geospatial context,
+                actor enrichment, telemetry, and executive-facing reasoning.
             </div>
             <div class="chip-row">
-                <div class="chip">Active incidents: <b>{len(df)}</b></div>
-                <div class="chip">Critical: <b>{critical_count}</b></div>
-                <div class="chip">High: <b>{high_count}</b></div>
-                <div class="chip">SLA state: <b>Operational</b></div>
-                <div class="chip">Last sync: <b>{now_utc}</b></div>
+                <div class="chip">Incidents <b>{len(df)}</b></div>
+                <div class="chip">Critical <b>{critical_count}</b></div>
+                <div class="chip">High <b>{high_count}</b></div>
+                <div class="chip">Ops State <b>Nominal</b></div>
+                <div class="chip">Last Sync <b>{now_utc}</b></div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_live_alerts():
+    st.markdown(
+        '<div class="section-kicker">Signal ingestion</div><div class="section-title">Live alert rail</div>',
+        unsafe_allow_html=True,
+    )
+
+    if random.random() < 0.22:
+        st.session_state.live_alerts.insert(0, generate_live_alert())
+
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+    top1, top2 = st.columns([1, 1])
+    with top1:
+        if st.button("Inject alert", key="inject_alert_btn"):
+            st.session_state.live_alerts.insert(0, generate_live_alert())
+            st.rerun()
+    with top2:
+        if st.button("Clear feed", key="clear_alert_btn"):
+            st.session_state.live_alerts = []
+            st.rerun()
+
+    st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
+
+    feed = st.session_state.live_alerts[:10]
+    if not feed:
+        st.markdown('<div class="small-note">No recent live alerts. Inject one to simulate new signal ingestion.</div>', unsafe_allow_html=True)
+    else:
+        for alert in feed:
+            sev_html = severity_badge(alert["severity"])
+            st.markdown(
+                f"""
+                <div class="queue-row" style="margin-bottom:8px;">
+                    <div class="queue-left">
+                        <div class="queue-title">{alert['alert']}</div>
+                        <div class="queue-sub">{alert['time']} · {alert['region']}</div>
+                    </div>
+                    <div>{sev_html}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_queue(df: pd.DataFrame) -> None:
@@ -785,66 +979,118 @@ def render_queue(df: pd.DataFrame) -> None:
                 st.rerun()
 
 
-def render_map(df: pd.DataFrame) -> None:
+def render_map(df):
     st.markdown(
-        '<div class="section-kicker">Spatial context</div><div class="section-title">Global incident map</div>',
+        '<div class="section-kicker">Spatial context</div><div class="section-title">Live threat map</div>',
         unsafe_allow_html=True,
     )
-    st.caption("Map fixed to work without a Mapbox token.")
 
     map_df = df.copy()
-    map_df["tooltip"] = map_df.apply(
-        lambda r: f"{r['incident_id']}\n{r['title']}\n{r['region']}\nSeverity: {r['severity']}\nRisk: {r['risk_score']}",
-        axis=1,
-    )
+    map_df["lat"] = map_df["lat"].astype(float)
+    map_df["lon"] = map_df["lon"].astype(float)
 
-    scatter_layer = pdk.Layer(
+    pulse = (math.sin(time.time() * 2.3) + 1.0) / 2.0
+    map_df["radius"] = map_df["risk_score"].astype(float) * (650 + pulse * 220)
+    map_df["color"] = map_df["severity"].apply(severity_to_color)
+
+    selected = map_df[map_df["incident_id"] == st.session_state.selected_incident_id]
+    if not selected.empty:
+        center_lat = float(selected.iloc[0]["lat"])
+        center_lon = float(selected.iloc[0]["lon"])
+        zoom = 3.1
+    else:
+        center_lat, center_lon, zoom = 20.0, 0.0, 1.35
+
+    glow_layer = pdk.Layer(
         "ScatterplotLayer",
         data=map_df,
-        get_position="[lon, lat]",
-        get_radius="map_radius",
+        get_position=["lon", "lat"],
+        get_radius="radius * 2.5",
+        get_fill_color=[255, 80, 80, 35],
+        pickable=False,
+    )
+
+    main_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=map_df,
+        get_position=["lon", "lat"],
+        get_radius="radius",
         get_fill_color="color",
         pickable=True,
         stroked=True,
-        get_line_color=[255, 255, 255, 140],
+        get_line_color=[255, 255, 255, 120],
         line_width_min_pixels=1,
+    )
+
+    core_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=map_df,
+        get_position=["lon", "lat"],
+        get_radius="radius * 0.24",
+        get_fill_color=[255, 255, 255, 220],
+        pickable=False,
+    )
+
+    heat_layer = pdk.Layer(
+        "HeatmapLayer",
+        data=map_df,
+        get_position=["lon", "lat"],
+        get_weight="risk_score",
+        radiusPixels=60,
+    )
+
+    line_data = []
+    if len(map_df) > 1:
+        for i in range(len(map_df) - 1):
+            line_data.append({
+                "from": [float(map_df.iloc[i]["lon"]), float(map_df.iloc[i]["lat"])],
+                "to": [float(map_df.iloc[i + 1]["lon"]), float(map_df.iloc[i + 1]["lat"])],
+            })
+
+    line_layer = pdk.Layer(
+        "LineLayer",
+        data=line_data,
+        get_source_position="from",
+        get_target_position="to",
+        get_color=[100, 200, 255, 120],
+        get_width=2,
     )
 
     text_layer = pdk.Layer(
         "TextLayer",
         data=map_df,
-        get_position="[lon, lat]",
+        get_position=["lon", "lat"],
         get_text="incident_id",
         get_size=14,
         get_color=[232, 237, 243, 190],
         get_alignment_baseline="bottom",
-        get_pixel_offset=[0, -18],
+        get_pixel_offset=[0, -24],
     )
 
     deck = pdk.Deck(
-        layers=[scatter_layer, text_layer],
+        layers=[heat_layer, glow_layer, main_layer, core_layer, line_layer, text_layer],
         initial_view_state=pdk.ViewState(
-            latitude=20,
-            longitude=0,
-            zoom=1.2,
-            pitch=28,
-            bearing=8,
+            latitude=center_lat,
+            longitude=center_lon,
+            zoom=zoom,
+            pitch=46,
+            bearing=20,
         ),
-        tooltip={"text": "{tooltip}"},
-        map_style=None,  # Important: works without Mapbox token
+        tooltip={"text": "{incident_id}\n{title}\n{region}\nSeverity: {severity}\nRisk: {risk_score}"},
+        map_style=None,
     )
 
     st.pydeck_chart(deck, use_container_width=True)
 
     selected_from_map = st.selectbox(
-        "Open incident from map context",
+        "Map focus",
         options=df["incident_id"].tolist(),
         index=(
             df.index[df["incident_id"] == st.session_state.selected_incident_id][0]
             if st.session_state.selected_incident_id in df["incident_id"].values
             else 0
         ),
-        key="map_selector",
+        key="map_selector_final_boss",
     )
     if selected_from_map != st.session_state.selected_incident_id:
         select_incident(selected_from_map)
@@ -878,6 +1124,34 @@ def render_incident_overview(incident: pd.Series) -> None:
             </div>
         </div>
         """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_exec_summary(incident: pd.Series) -> None:
+    actor = ACTOR_LIBRARY[incident["title"]]
+    summary = (
+        f"{incident['incident_id']} is a {incident['severity'].lower()}-severity {incident['title'].lower()} case affecting "
+        f"{incident['entities']} in {incident['region']}. Telemetry from {incident['source']} has been correlated with "
+        f"{incident['events']:,} events and mapped to {', '.join(incident['mitre'])}. Current assessment links activity to "
+        f"the {actor['actor']} profile. Recommended next step: maintain containment pressure, validate identity and endpoint exposure, "
+        f"and prepare stakeholder comms if business impact widens."
+    )
+    st.markdown(
+        '<div class="section-kicker">Leadership brief</div><div class="section-title">Executive summary</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(f'<div class="panel" style="line-height:1.7;">{summary}</div>', unsafe_allow_html=True)
+
+
+def render_ai_analyst_panel(incident: pd.Series):
+    st.markdown(
+        '<div class="section-kicker">Analyst reasoning</div><div class="section-title">AI assessment</div>',
+        unsafe_allow_html=True,
+    )
+    assessment = generate_ai_assessment(incident)
+    st.markdown(
+        f'<div class="panel" style="line-height:1.75;">{assessment}</div>',
         unsafe_allow_html=True,
     )
 
@@ -940,6 +1214,76 @@ def render_actor_card(incident: pd.Series) -> None:
     )
 
 
+def render_graph_view(df: pd.DataFrame):
+    st.markdown(
+        '<div class="section-kicker">Relational analysis</div><div class="section-title">Threat relationship graph</div>',
+        unsafe_allow_html=True,
+    )
+
+    nodes_df, edges_df = build_graph_data(df)
+
+    edge_layer = pdk.Layer(
+        "LineLayer",
+        data=edges_df,
+        get_source_position="source",
+        get_target_position="target",
+        get_color="color",
+        get_width="width",
+        pickable=False,
+    )
+
+    node_glow = pdk.Layer(
+        "ScatterplotLayer",
+        data=nodes_df,
+        get_position=["x", "y"],
+        get_radius="radius * 1.8",
+        get_fill_color=[141, 183, 255, 35],
+        pickable=False,
+    )
+
+    node_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=nodes_df,
+        get_position=["x", "y"],
+        get_radius="radius",
+        get_fill_color="color",
+        pickable=True,
+        stroked=True,
+        get_line_color=[255, 255, 255, 120],
+        line_width_min_pixels=1,
+    )
+
+    label_layer = pdk.Layer(
+        "TextLayer",
+        data=nodes_df,
+        get_position=["x", "y"],
+        get_text="label",
+        get_size=13,
+        get_color=[232, 237, 243, 200],
+        get_pixel_offset=[0, -18],
+    )
+
+    deck = pdk.Deck(
+        layers=[edge_layer, node_glow, node_layer, label_layer],
+        initial_view_state=pdk.ViewState(
+            latitude=0,
+            longitude=0,
+            zoom=3.2,
+            pitch=0,
+            bearing=0,
+        ),
+        tooltip={"text": "{tooltip}"},
+        map_style=None,
+    )
+
+    st.pydeck_chart(deck, use_container_width=True)
+
+    st.markdown(
+        '<div class="small-note">Graph logic: incidents link to actor profiles and related IOCs to simulate the relationship analysis style used in serious intelligence tooling.</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_actions(incident: pd.Series) -> None:
     st.markdown(
         '<div class="section-kicker">Response</div><div class="section-title">Operator actions</div>',
@@ -969,22 +1313,6 @@ def render_actions(incident: pd.Series) -> None:
         st.markdown('<div class="small-note">No operator actions taken yet.</div>', unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
-
-
-def render_exec_summary(incident: pd.Series) -> None:
-    actor = ACTOR_LIBRARY[incident["title"]]
-    summary = (
-        f"{incident['incident_id']} is a {incident['severity'].lower()}-severity {incident['title'].lower()} case affecting "
-        f"{incident['entities']} in {incident['region']}. Telemetry from {incident['source']} has been correlated with "
-        f"{incident['events']:,} events and mapped to {', '.join(incident['mitre'])}. Current assessment links activity to "
-        f"the {actor['actor']} profile. Recommended next step: maintain containment pressure, validate identity and endpoint exposure, "
-        f"and prepare stakeholder comms if business impact widens."
-    )
-    st.markdown(
-        '<div class="section-kicker">Leadership brief</div><div class="section-title">Executive summary</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(f'<div class="panel" style="line-height:1.7;">{summary}</div>', unsafe_allow_html=True)
 
 
 # =========================================================
@@ -1030,9 +1358,11 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 # =========================================================
 # MAIN LAYOUT
 # =========================================================
-left, right = st.columns([1.08, 1], gap="large")
+left, right = st.columns([1.1, 1], gap="large")
 
 with left:
+    render_live_alerts()
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
     render_queue(display_df)
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
     render_map(display_df)
@@ -1044,11 +1374,13 @@ with left:
     st.dataframe(MITRE_MATRIX, use_container_width=True)
 
 with right:
-    tabs = st.tabs(["Overview", "Timeline", "Logs", "Actor", "Actions"])
+    tabs = st.tabs(["Overview", "Timeline", "Logs", "Actor", "Graph", "Actions"])
     with tabs[0]:
         render_incident_overview(selected)
         st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
         render_exec_summary(selected)
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+        render_ai_analyst_panel(selected)
     with tabs[1]:
         render_timeline(selected)
     with tabs[2]:
@@ -1056,6 +1388,8 @@ with right:
     with tabs[3]:
         render_actor_card(selected)
     with tabs[4]:
+        render_graph_view(display_df)
+    with tabs[5]:
         render_actions(selected)
 
 # =========================================================
@@ -1063,6 +1397,6 @@ with right:
 # =========================================================
 st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 st.markdown(
-    '<div class="small-note">Production-grade portfolio demo: stateful incident drill-down, risk-based prioritisation, spatial context, MITRE enrichment, operator actions, and a premium dark UI that works without a Mapbox token.</div>',
+    '<div class="small-note">Production-grade portfolio demo: live alert rail, risk-based incident prioritisation, geospatial threat visualisation, MITRE enrichment, actor profiling, graph relationships, operator actions, and a Gotham-style UI.</div>',
     unsafe_allow_html=True,
 )
