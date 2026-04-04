@@ -250,6 +250,41 @@ st.markdown(
 # =========================================================
 # CONSTANTS
 # =========================================================
+def extract_location(text):
+    text = str(text).lower()
+
+    location_map = {
+        "London": ["london", "uk", "britain", "england"],
+        "Paris": ["paris", "france"],
+        "Berlin": ["berlin", "germany"],
+        "Rome": ["rome", "italy"],
+        "Madrid": ["madrid", "spain"],
+        "New York": ["new york", "nyc", "united states", "usa"],
+        "Los Angeles": ["los angeles", "la"],
+        "Chicago": ["chicago"],
+        "Dubai": ["dubai", "uae"],
+        "Tel Aviv": ["tel aviv", "israel"],
+        "Cairo": ["cairo", "egypt"],
+        "Mumbai": ["mumbai", "india"],
+        "Delhi": ["delhi"],
+        "Beijing": ["beijing", "china"],
+        "Shanghai": ["shanghai"],
+        "Tokyo": ["tokyo", "japan"],
+        "Seoul": ["seoul", "korea"],
+        "Sydney": ["sydney", "australia"],
+        "Melbourne": ["melbourne"],
+        "Singapore": ["singapore"],
+        "Jakarta": ["jakarta", "indonesia"],
+        "Bangkok": ["bangkok", "thailand"],
+    }
+
+    for location, keywords in location_map.items():
+        for keyword in keywords:
+            if keyword in text:
+                return location
+
+    return "Global"
+    
 LOCATION_COORDS = {
     "london": (51.5074, -0.1278),
     "paris": (48.8566, 2.3522),
@@ -322,6 +357,13 @@ REGION_LOOKUP = {
     "Middle East": ["tehran", "dubai", "tel aviv", "gaza", "jerusalem"],
     "Africa": ["cairo", "nairobi", "lagos", "cape town", "johannesburg"],
     "Latin America": ["sao paulo", "rio de janeiro", "buenos aires"],
+
+    def location_to_coords(location):
+    return LOCATION_COORDS.get(location.lower(), (20, 0))
+
+    text = f"{title} {description}"
+location = extract_location(text)
+
 }
 
 THREAT_PATTERNS = {
