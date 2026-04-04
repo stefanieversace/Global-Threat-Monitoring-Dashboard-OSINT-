@@ -13,17 +13,59 @@ import xml.etree.ElementTree as ET
 # =========================
 st.set_page_config(page_title="Global Threat Monitor", layout="wide")
 
-st.markdown("<style>header {visibility:hidden;}</style>", unsafe_allow_html=True)
-st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
-
+# =========================
+# PREMIUM UI
+# =========================
 st.markdown("""
-<div style="font-size:38px;font-weight:800;text-align:center;">
-🌍 Global Threat Monitor
-</div>
-<div style="text-align:center;color:#9fb0cf;margin-bottom:25px;">
-AI Intelligence • Multi-Source Threat Detection • SOC Simulation
-</div>
+<style>
+header {visibility:hidden;}
+
+.stApp {
+    background: radial-gradient(circle at top left, rgba(124,156,255,0.12), transparent 25%),
+                radial-gradient(circle at top right, rgba(85,230,193,0.10), transparent 20%),
+                linear-gradient(180deg, #05070d 0%, #0a1020 100%);
+    color: #eef2ff;
+}
+
+.title {
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.subtitle {
+    text-align: center;
+    color: #9fb0cf;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: rgba(18,24,38,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 12px;
+}
+
+.alert-high { border-left: 4px solid #ff5c7c; }
+.alert-medium { border-left: 4px solid #ffbf66; }
+.alert-low { border-left: 4px solid #5ce1a5; }
+
+.brief {
+    background:#0f172a;
+    padding:18px;
+    border-radius:16px;
+    white-space:pre-wrap;
+    font-family:monospace;
+}
+</style>
 """, unsafe_allow_html=True)
+
+# =========================
+# HEADER
+# =========================
+st.markdown("<div class='title'>🌍 Global Threat Monitor</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Elite OSINT Intelligence Platform • SOC Simulation</div>", unsafe_allow_html=True)
 
 # =========================
 # API KEY
@@ -40,12 +82,11 @@ API_KEY = get_key()
 # LOCATIONS
 # =========================
 LOCATIONS = {
-    "london": (51.5074, -0.1278),
-    "paris": (48.8566, 2.3522),
-    "new york": (40.7128, -74.0060),
-    "dubai": (25.2048, 55.2708),
-    "tokyo": (35.6762, 139.6503),
-    "sydney": (-33.8688, 151.2093),
+    "london": (51.5, -0.12),
+    "paris": (48.8, 2.35),
+    "new york": (40.7, -74),
+    "dubai": (25.2, 55.2),
+    "tokyo": (35.6, 139.6),
 }
 
 def extract_location(text):
@@ -65,7 +106,7 @@ def severity_score(text):
     score = 20
     text = text.lower()
 
-    if any(x in text for x in ["ransomware","attack","breach","explosion"]):
+    if any(x in text for x in ["attack","breach","ransomware"]):
         score += 40
     if any(x in text for x in ["protest","fraud","phishing"]):
         score += 20
@@ -83,30 +124,23 @@ def severity_label(score):
 def mitre(text):
     if "phishing" in text.lower(): return "T1566"
     if "ransomware" in text.lower(): return "T1486"
-    if "ddos" in text.lower(): return "T1498"
     return "T1595"
 
 # =========================
-# AI SUMMARY (SIMULATED)
+# AI SUMMARY
 # =========================
-def generate_ai_summary(df):
-    top = df.head(3)
-
-    summary = "EXECUTIVE INTELLIGENCE SUMMARY\n\n"
-    for _, row in top.iterrows():
-        summary += f"- {row['title']} ({row['severity']})\n"
-
-    summary += "\nASSESSMENT:\n"
-    summary += "Current threat landscape shows elevated cyber and civil risk indicators.\n"
-    summary += "High severity events may impact critical infrastructure and operations.\n"
-
-    return summary
+def generate_summary(df):
+    text = "EXECUTIVE SUMMARY\n\n"
+    for t in df.head(3)["title"]:
+        text += f"- {t}\n"
+    text += "\nThreat Level: Elevated\n"
+    return text
 
 # =========================
-# MULTI-SOURCE FETCH
+# FETCH DATA (MULTI SOURCE)
 # =========================
 @st.cache_data(ttl=600)
-def fetch_news():
+def fetch():
     data = []
 
     # NewsAPI
@@ -140,7 +174,7 @@ def fetch_news():
 
     return data
 
-articles = fetch_news()
+articles = fetch()
 
 # =========================
 # PROCESS
@@ -204,22 +238,17 @@ m = folium.Map(location=[20,0], zoom_start=2, tiles="CartoDB dark_matter")
 HeatMap([[r["lat"],r["lon"],r["score"]/100] for _,r in df.iterrows()]).add_to(m)
 
 cluster = MarkerCluster().add_to(m)
-
 for _,r in df.iterrows():
-    folium.Marker(
-        [r["lat"],r["lon"]],
-        popup=r["title"]
-    ).add_to(cluster)
+    folium.Marker([r["lat"],r["lon"]], popup=r["title"]).add_to(cluster)
 
 st_folium(m, height=500)
 
 # =========================
-# CLICKABLE INCIDENTS
+# INCIDENT EXPLORER
 # =========================
 st.subheader("🎯 Incident Explorer")
 
-selected = st.selectbox("Select incident", df["title"])
-
+selected = st.selectbox("Select Incident", df["title"])
 incident = df[df["title"]==selected].iloc[0]
 
 st.markdown(f"""
@@ -233,14 +262,30 @@ st.markdown(f"""
 """)
 
 # =========================
-# MITRE GRID
+# ALERT CARDS
+# =========================
+st.subheader("🚨 Alerts")
+
+for _,r in df.head(8).iterrows():
+    level = "alert-high" if r["severity"]=="High" else "alert-medium" if r["severity"]=="Medium" else "alert-low"
+
+    st.markdown(f"""
+    <div class="card {level}">
+        <b>{r['title']}</b><br>
+        <small>{r['source']} • {r['location']}</small><br>
+        <small>{r['severity']} ({r['score']}) • MITRE {r['mitre']}</small>
+    </div>
+    """, unsafe_allow_html=True)
+
+# =========================
+# MITRE CHART
 # =========================
 st.subheader("📊 MITRE Coverage")
 
-mitre_counts = df["mitre"].value_counts().reset_index()
-mitre_counts.columns = ["Technique","Count"]
+mitre_df = df["mitre"].value_counts().reset_index()
+mitre_df.columns = ["Technique","Count"]
 
-fig = px.bar(mitre_counts, x="Technique", y="Count")
+fig = px.bar(mitre_df, x="Technique", y="Count")
 fig.update_layout(template="plotly_dark")
 
 st.plotly_chart(fig, use_container_width=True)
@@ -248,17 +293,14 @@ st.plotly_chart(fig, use_container_width=True)
 # =========================
 # AI BRIEF
 # =========================
-st.subheader("🧠 AI Intelligence Summary")
+st.subheader("🧠 Intelligence Summary")
 
-brief = generate_ai_summary(df)
+brief = generate_summary(df)
 
-st.markdown(f"""
-<div style='background:#0f172a;padding:15px;border-radius:10px;white-space:pre-wrap;'>
-{brief}
-</div>
-""", unsafe_allow_html=True)
+st.markdown(f"<div class='brief'>{brief}</div>", unsafe_allow_html=True)
 
 # =========================
 # EXPORT
 # =========================
-st.download_button("Download Brief", brief, "brief.txt")
+st.download_button("⬇ Download Brief", brief, "brief.txt")
+st.download_button("⬇ Download Data", df.to_csv(index=False), "data.csv")
