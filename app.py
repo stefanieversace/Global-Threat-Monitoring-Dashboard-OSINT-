@@ -211,7 +211,7 @@ st.markdown(
 # =========================================================
 # CONFIG / ENV
 # =========================================================
-NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "").strip()
+NEWSAPI_KEY = st.secrets.get("NEWSAPI_KEY") or os.getenv("NEWSAPI_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 
