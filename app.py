@@ -27,143 +27,175 @@ except Exception:
 # PAGE CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Media & Events Intelligence Platform",
+    page_title="Global Intelligence Briefing",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # =========================================================
-# STYLING — PALANTIR / BLOOMBERG-STYLE UI
+# CLEAN LIGHTWEIGHT STYLING
 # =========================================================
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #0b0f14;
-            color: #e6edf3;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
 
         .main {
-            padding-top: 0.6rem;
+            padding-top: 0.5rem;
         }
 
         .block-container {
-            padding-top: 1rem;
+            max-width: 1220px;
+            padding-top: 1.3rem;
             padding-bottom: 2rem;
-            max-width: 1500px;
         }
 
-        .elite-banner {
-            background: linear-gradient(90deg, #111827 0%, #1f2937 100%);
-            border: 1px solid #374151;
-            color: #e5e7eb;
-            padding: 1.25rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+        section[data-testid="stSidebar"] {
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
         }
 
-        .elite-banner h1 {
+        .top-banner {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 1.5rem 1.5rem 1.25rem 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .top-banner h1 {
             margin: 0;
             font-size: 2rem;
-            letter-spacing: 0.02em;
+            font-weight: 600;
+            color: #0f172a;
         }
 
-        .elite-banner p {
-            margin: 0.4rem 0 0 0;
-            color: #9ca3af;
-            font-size: 0.96rem;
+        .top-banner p {
+            margin: 0.45rem 0 0 0;
+            color: #64748b;
+            font-size: 0.98rem;
         }
 
-        .section-card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 1rem 1rem 0.75rem 1rem;
+        .soft-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.15rem;
             margin-bottom: 1rem;
         }
 
-        .summary-box {
-            background: #111827;
-            border-left: 4px solid #22c55e;
-            padding: 1rem 1rem 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .ops-box {
-            background: #111827;
-            border-left: 4px solid #f59e0b;
-            padding: 1rem 1rem 0.75rem 1rem;
-            border-radius: 8px;
+        .muted-card {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1rem;
             margin-bottom: 1rem;
         }
 
         .small-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
+            font-size: 0.76rem;
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-        }
-
-        section[data-testid="stSidebar"] {
-            background-color: #020617;
-            border-right: 1px solid #111827;
-        }
-
-        [data-testid="stMetric"] {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        div[data-testid="stDataFrame"] {
-            border: 1px solid #1f2937;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
-        }
-
-        .stTabs [data-baseweb="tab"] {
-            background-color: #111827;
-            border-radius: 8px;
-            padding-left: 14px;
-            padding-right: 14px;
-            border: 1px solid #1f2937;
-        }
-
-        .news-card {
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 10px;
-            padding: 0.9rem 1rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .news-title {
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 0.35rem;
-        }
-
-        .news-meta {
-            color: #94a3b8;
-            font-size: 0.82rem;
             margin-bottom: 0.45rem;
         }
 
-        .entity-chip {
-            display: inline-block;
-            padding: 0.25rem 0.55rem;
-            border-radius: 999px;
-            margin: 0.15rem 0.2rem 0.15rem 0;
-            font-size: 0.78rem;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #e2e8f0;
+        [data-testid="stMetric"] {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.8rem;
+        }
+
+        .alert-row {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .alert-critical {
+            border-left: 4px solid #dc2626;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-info {
+            border-left: 4px solid #2563eb;
+        }
+
+        .brief-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.1rem;
+            line-height: 1.65;
+        }
+
+        .ai-box {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.1rem;
+            line-height: 1.65;
+        }
+
+        .news-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.95rem 1rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .news-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.3rem;
+        }
+
+        .news-meta {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-bottom: 0.45rem;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 12px;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-weight: 500;
+            padding-left: 0.2rem;
+            padding-right: 0.2rem;
+        }
+
+        .stTabs [aria-selected="true"] {
+            color: #0f172a !important;
+            border-bottom: 2px solid #0f172a;
+        }
+
+        div[data-testid="stDataFrame"] {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .caption-line {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: -0.2rem;
+            margin-bottom: 1rem;
         }
     </style>
     """,
@@ -175,73 +207,23 @@ st.markdown(
 # =========================================================
 st.markdown(
     """
-    <div class="elite-banner">
-        <h1>Media &amp; Events Intelligence Platform</h1>
+    <div class="top-banner">
+        <h1>Global Intelligence Briefing</h1>
         <p>
-            Operational threat monitoring for venues, productions, talent, brand reputation,
-            digital operations, and public-facing experiences.
+            Real-time monitoring of global events, operational risks, and emerging threats.
         </p>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-st.caption("Live OSINT Monitoring • Risk Prioritisation • Intelligence Analysis • IOC Extraction • Entity Tracking")
-
-st.markdown("## 🧾 Intelligence Snapshot")
 
 st.markdown(
-    """
-    <div class="summary-box">
-        <div class="small-label">Operational Context</div>
-        <p style="margin-top:0.6rem;">
-            This platform aggregates current open-source reporting to identify, prioritise,
-            and assess emerging threats. Outputs are designed to support rapid decision-making
-            across security, intelligence, venue operations, production environments,
-            executive protection, and reputational monitoring.
-        </p>
-    </div>
-    """,
+    '<div class="caption-line">Live monitoring • risk prioritisation • executive-style intelligence outputs</div>',
     unsafe_allow_html=True,
 )
 
-st.markdown("### 🎯 What this platform provides")
-snapshot_col1, snapshot_col2, snapshot_col3 = st.columns(3)
-
-with snapshot_col1:
-    st.markdown(
-        """
-        **Threat Detection**
-        - Identifies emerging incidents
-        - Extracts locations and named entities
-        - Surfaces watchlist-related reporting
-        """
-    )
-
-with snapshot_col2:
-    st.markdown(
-        """
-        **Risk Assessment**
-        - Scores severity and confidence
-        - Maps incidents to MITRE ATT&CK
-        - Classifies threats by category
-        """
-    )
-
-with snapshot_col3:
-    st.markdown(
-        """
-        **Decision Support**
-        - Produces executive-style briefs
-        - Triggers SOC-style alerts
-        - Highlights operational business impacts
-        """
-    )
-
-st.divider()
-
 # =========================================================
-# CONFIG / SECRETS / CLIENTS
+# SECRETS / CLIENTS
 # =========================================================
 NEWS_API_KEY = st.secrets.get("NEWS_API_KEY", None)
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", None)
@@ -252,7 +234,6 @@ if OPENAI_API_KEY and OpenAI is not None:
         openai_client = OpenAI(api_key=OPENAI_API_KEY)
     except Exception:
         openai_client = None
-
 
 # =========================================================
 # NLP LOADER
@@ -266,9 +247,7 @@ def load_nlp():
     except Exception:
         return None
 
-
 nlp = load_nlp()
-
 
 # =========================================================
 # CONSTANTS
@@ -300,9 +279,8 @@ DEFAULT_NEWS_QUERY = (
     '("cyber attack" OR protest OR conflict OR unrest OR ransomware OR breach OR explosion OR disruption OR venue OR concert OR stadium)'
 )
 
-
 # =========================================================
-# HELPER FUNCTIONS
+# HELPERS
 # =========================================================
 def safe_get(item: Dict[str, Any], key: str, default: Any = "") -> Any:
     return item.get(key, default) if isinstance(item, dict) else default
@@ -425,20 +403,13 @@ def generate_ai_summary(articles: List[Dict[str, Any]]) -> str:
     )
 
     prompt = f"""
-You are an intelligence analyst supporting media, venue, event, and enterprise security operations.
+You are an intelligence analyst supporting operational decision-making.
 
 Based on the reporting below, produce:
 
 1. Key Developments (3 bullet points)
 2. Risk Assessment (overall risk + short reason)
 3. Analyst Insight (2-3 sentences, concise and professional)
-
-Focus on operationally relevant impacts such as:
-- venue disruption
-- production disruption
-- reputational risk
-- executive or talent exposure
-- digital operations
 
 Reporting:
 {text_blob}
@@ -502,7 +473,6 @@ def extract_entities(text: str) -> Dict[str, List[str]]:
     if not text:
         return {"people": [], "orgs": [], "locations": []}
 
-    # spaCy path
     if nlp is not None:
         try:
             doc = nlp(text)
@@ -515,7 +485,6 @@ def extract_entities(text: str) -> Dict[str, List[str]]:
         except Exception:
             pass
 
-    # Basic fallback
     capitalised = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text)
     unique = sorted(set(capitalised))
     return {"people": unique[:5], "orgs": [], "locations": []}
@@ -562,13 +531,13 @@ def evaluate_alerts(brief: str, mapped_events: List[Dict[str, Any]], watchlist_m
         alerts.append({"level": "WARNING", "message": "Potential venue or event disruption identified."})
 
     if exec_impacts:
-        alerts.append({"level": "WARNING", "message": "High-profile individual or talent-related mention requires review."})
+        alerts.append({"level": "WARNING", "message": "High-profile individual or executive-related reporting requires review."})
 
     if reputational_impacts:
         alerts.append({"level": "INFO", "message": "Reputationally sensitive reporting present in the current cycle."})
 
     if cyber_impacts or ("cyber" in (brief or "").lower()):
-        alerts.append({"level": "INFO", "message": "Cyber-related activity detected in current reporting."})
+        alerts.append({"level": "INFO", "message": "Cyber-related reporting is present in current monitoring."})
 
     return alerts
 
@@ -611,22 +580,6 @@ def build_entity_summary(items: List[Dict[str, Any]]) -> Tuple[pd.DataFrame, pd.
     return people_df, org_df, location_df
 
 
-def render_alerts(alerts: List[Dict[str, str]]) -> None:
-    st.header("🚨 Active Alerts")
-    if alerts:
-        for alert in alerts:
-            level = alert.get("level", "INFO")
-            message = alert.get("message", "Alert triggered.")
-            if level == "CRITICAL":
-                st.error(f"🔴 {message}")
-            elif level == "WARNING":
-                st.warning(f"🟠 {message}")
-            else:
-                st.info(f"🔵 {message}")
-    else:
-        st.success("No active alerts in the current monitoring cycle.")
-
-
 def add_enrichment_to_events(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     enriched_items = []
 
@@ -654,6 +607,35 @@ def add_enrichment_to_events(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
     return enriched_items
 
 
+def render_alerts(alerts: List[Dict[str, str]]) -> None:
+    if not alerts:
+        return
+
+    st.markdown("### Alerts")
+    for alert in alerts:
+        level = alert.get("level", "INFO")
+        message = alert.get("message", "Alert triggered.")
+
+        css_class = "alert-info"
+        icon = "🔵"
+
+        if level == "CRITICAL":
+            css_class = "alert-critical"
+            icon = "🔴"
+        elif level == "WARNING":
+            css_class = "alert-warning"
+            icon = "🟠"
+
+        st.markdown(
+            f"""
+            <div class="alert-row {css_class}">
+                {icon} <strong>{message}</strong>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 # =========================================================
 # SIDEBAR
 # =========================================================
@@ -661,7 +643,7 @@ with st.sidebar:
     st.header("Controls")
 
     selected_risks = st.multiselect(
-        "Filter by risk level",
+        "Risk level",
         ["HIGH", "MEDIUM", "LOW"],
         default=["HIGH", "MEDIUM", "LOW"],
     )
@@ -674,7 +656,7 @@ with st.sidebar:
 
     watchlist_input = st.text_input(
         "Watchlist terms",
-        placeholder="e.g. New York, London, protest, executive, venue",
+        placeholder="e.g. London, protest, executive, venue",
     )
 
     max_articles = st.slider("Articles to analyse", 5, 30, 10)
@@ -685,44 +667,25 @@ with st.sidebar:
         height=110,
     )
 
-    st.markdown("---")
-    st.caption("Tip: clear the watchlist if you want the fullest map view.")
-
 watchlist_terms = [term.strip() for term in watchlist_input.split(",") if term.strip()]
 
-
 # =========================================================
-# MAIN EXECUTION
+# MAIN
 # =========================================================
 if st.button("Generate Intelligence Brief", use_container_width=True):
     try:
-        # -------------------------------------------------
-        # Core threat monitor pipeline
-        # -------------------------------------------------
         brief, mapped_events, unmapped_articles, summary = generate_brief(
             max_articles=max_articles,
             watchlist_terms=watchlist_terms,
         )
 
-        # -------------------------------------------------
-        # Live news feed
-        # -------------------------------------------------
         live_articles = fetch_live_news(query=live_news_query, page_size=max_articles)
 
-        # -------------------------------------------------
-        # Enrichment
-        # -------------------------------------------------
         mapped_events = add_enrichment_to_events(mapped_events)
         unmapped_articles = add_enrichment_to_events(unmapped_articles)
 
-        # -------------------------------------------------
-        # AI summary
-        # -------------------------------------------------
         ai_summary = generate_ai_summary(live_articles)
 
-        # -------------------------------------------------
-        # Summary values
-        # -------------------------------------------------
         high_count = summary.get("high_count", 0)
         medium_count = summary.get("medium_count", 0)
         low_count = summary.get("low_count", 0)
@@ -731,100 +694,43 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
         key_judgements = summary.get("key_judgements", [])
 
         top_region = max(region_counts, key=region_counts.get) if region_counts else "N/A"
-        total_events = len(mapped_events) + len(unmapped_articles)
         priority_score = len([e for e in mapped_events if e.get("risk") == "HIGH"]) * 10 + (watchlist_matches * 5)
 
-        # -------------------------------------------------
-        # Alerts
-        # -------------------------------------------------
         alerts = evaluate_alerts(brief, mapped_events, watchlist_matches)
 
-        # -------------------------------------------------
-        # Alert posture summary
-        # -------------------------------------------------
-        if high_count >= 3:
-            st.error("Elevated alert posture: multiple high-risk incidents identified in current reporting.")
-        elif watchlist_matches > 0:
-            st.warning("Watchlist alert: one or more watchlist terms matched current reporting.")
-        else:
-            st.success("No major alert threshold triggered in current reporting.")
-
-        # -------------------------------------------------
         # Metrics
-        # -------------------------------------------------
-        metric_col1, metric_col2, metric_col3, metric_col4, metric_col5, metric_col6 = st.columns(6)
-        metric_col1.metric("High Risk", high_count)
-        metric_col2.metric("Medium Risk", medium_count)
-        metric_col3.metric("Low Risk", low_count)
-        metric_col4.metric("Watchlist Matches", watchlist_matches)
-        metric_col5.metric("Top Region", top_region)
-        metric_col6.metric("Threat Priority Score", priority_score)
+        col1, col2, col3, col4, col5 = st.columns(5)
+        col1.metric("High Risk", high_count)
+        col2.metric("Medium Risk", medium_count)
+        col3.metric("Low Risk", low_count)
+        col4.metric("Priority Score", priority_score)
+        col5.metric("Top Region", top_region)
 
-        # -------------------------------------------------
-        # Executive summary boxes
-        # -------------------------------------------------
-        st.markdown(
-            """
-            <div class="summary-box">
-                <div class="small-label">Executive Summary</div>
-                <p style="margin-top:0.6rem;">
-                    This platform reviews current reporting, scores severity, extracts locations,
-                    identifies entities, extracts indicators, classifies threats, and produces
-                    intelligence-style outputs to support situational awareness and monitoring decisions.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("")
 
-        st.markdown(
-            """
-            <div class="ops-box">
-                <div class="small-label">Operations Desk Priority View</div>
-                <p style="margin-top:0.6rem;">
-                    Prioritises incidents that could affect venues, live events, productions,
-                    corporate offices, brand reputation, digital operations, or high-profile personnel.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # -------------------------------------------------
-        # Key judgements
-        # -------------------------------------------------
-        st.subheader("🧠 Key Intelligence Judgements")
-        st.caption("Analyst-derived insights based on current reporting and risk scoring")
-
-        if key_judgements:
-            for idx, judgement in enumerate(key_judgements[:3], start=1):
-                st.write(f"{idx}. {judgement}")
-        else:
-            st.info("No key judgements were returned for this cycle.")
-
-        # -------------------------------------------------
-        # Recommended actions
-        # -------------------------------------------------
-        st.subheader("📌 Recommended Actions")
-        if high_count >= 3:
-            st.markdown("- Increase monitoring and alert posture in high-risk regions.")
-            st.markdown("- Review operational exposure in affected locations.")
-            st.markdown("- Escalate relevant items to leadership or incident management workflows.")
-        elif watchlist_matches > 0:
-            st.markdown("- Monitor watchlist-related developments closely.")
-            st.markdown("- Validate possible impact to assets, personnel, events, or reputation.")
-        else:
-            st.markdown("- Maintain standard monitoring posture.")
-            st.markdown("- Continue scheduled review and watchlist enrichment.")
-
-        # -------------------------------------------------
-        # Active alerts
-        # -------------------------------------------------
+        # Alerts
         render_alerts(alerts)
 
-        # -------------------------------------------------
-        # Filtering
-        # -------------------------------------------------
+        # Top split layout
+        left_col, right_col = st.columns([1.25, 1])
+
+        with left_col:
+            st.markdown("### Intelligence Brief")
+            st.markdown(f'<div class="brief-box">{brief.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+
+        with right_col:
+            st.markdown("### AI Summary")
+            st.markdown(f'<div class="ai-box">{ai_summary.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+
+        # Key judgements
+        if key_judgements:
+            st.markdown("### Key Judgements")
+            st.markdown('<div class="soft-card">', unsafe_allow_html=True)
+            for idx, judgement in enumerate(key_judgements[:3], start=1):
+                st.markdown(f"**{idx}.** {judgement}")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # Map
         filtered_events = [
             event for event in mapped_events
             if event.get("risk") in selected_risks and event.get("category") in selected_categories
@@ -835,102 +741,131 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             if article.get("risk") in selected_risks and article.get("category") in selected_categories
         ]
 
-        # -------------------------------------------------
-        # Tabs
-        # -------------------------------------------------
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(
-            [
-                "🌍 Operations Map",
-                "🧾 Executive Brief",
-                "🤖 AI Summary",
-                "📊 Incident Data",
-                "📈 Threat Trends",
-                "🌐 Regional Analysis",
-                "🧬 MITRE Mapping",
-                "🔎 IOC Extraction",
-                "👥 Entity Tracking",
-            ]
-        )
+        st.markdown("### Global Map")
+        st.markdown('<div class="soft-card">', unsafe_allow_html=True)
 
-        # -------------------------------------------------
-        # TAB 1 — MAP
-        # -------------------------------------------------
-        with tab1:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Dynamic Global Threat Map")
+        threat_map = folium.Map(location=[20, 0], zoom_start=2, tiles="CartoDB positron")
+        marker_cluster = MarkerCluster().add_to(threat_map)
 
-            threat_map = folium.Map(location=[20, 0], zoom_start=2, tiles="CartoDB dark_matter")
-            marker_cluster = MarkerCluster().add_to(threat_map)
-
-            for event in filtered_events:
-                popup_text = (
-                    f"<b>{event.get('title', 'Untitled')}</b><br>"
-                    f"Location: {event.get('location', 'N/A')}<br>"
-                    f"Region: {event.get('region', 'N/A')}<br>"
-                    f"Risk: {event.get('risk', 'N/A')}<br>"
-                    f"Score: {event.get('score', 'N/A')}<br>"
-                    f"Confidence: {event.get('confidence', 'N/A')}<br>"
-                    f"Category: {event.get('category', 'N/A')}<br>"
-                    f"MITRE: {event.get('mitre', 'N/A')}<br>"
-                    f"Business Impact: {', '.join(event.get('business_impact', []))}<br>"
-                    f"Source: {event.get('source', 'N/A')}<br>"
-                    f"Published: {event.get('published_at', 'N/A')}<br>"
-                    f"<a href='{event.get('url', '#')}' target='_blank'>Open article</a>"
-                )
-
-                if event.get("risk") == "HIGH":
-                    icon_colour = "red"
-                elif event.get("risk") == "MEDIUM":
-                    icon_colour = "orange"
-                else:
-                    icon_colour = "green"
-
-                lat = event.get("lat")
-                lon = event.get("lon")
-
-                if lat is not None and lon is not None:
-                    folium.Marker(
-                        location=[lat, lon],
-                        popup=folium.Popup(popup_text, max_width=360),
-                        icon=folium.Icon(color=icon_colour),
-                    ).add_to(marker_cluster)
-
-            if filtered_events:
-                html(threat_map._repr_html_(), height=580)
-                st.caption(f"Showing {len(filtered_events)} mapped incidents from {total_events} analysed items.")
-            else:
-                st.warning("No mapped incidents match the selected filters.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 2 — EXECUTIVE BRIEF
-        # -------------------------------------------------
-        with tab2:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Executive Brief")
-
-            st.download_button(
-                label="Download Intelligence Brief",
-                data=brief,
-                file_name="daily_intelligence_brief.txt",
-                mime="text/plain",
-                use_container_width=False,
+        for event in filtered_events:
+            popup_text = (
+                f"<b>{event.get('title', 'Untitled')}</b><br>"
+                f"Location: {event.get('location', 'N/A')}<br>"
+                f"Region: {event.get('region', 'N/A')}<br>"
+                f"Risk: {event.get('risk', 'N/A')}<br>"
+                f"Score: {event.get('score', 'N/A')}<br>"
+                f"Category: {event.get('category', 'N/A')}<br>"
+                f"MITRE: {event.get('mitre', 'N/A')}<br>"
+                f"Business Impact: {', '.join(event.get('business_impact', []))}<br>"
+                f"Source: {event.get('source', 'N/A')}<br>"
+                f"<a href='{event.get('url', '#')}' target='_blank'>Open article</a>"
             )
 
-            st.text_area("Brief Output", brief, height=520)
-            st.markdown("</div>", unsafe_allow_html=True)
+            if event.get("risk") == "HIGH":
+                icon_colour = "red"
+            elif event.get("risk") == "MEDIUM":
+                icon_colour = "orange"
+            else:
+                icon_colour = "green"
 
-        # -------------------------------------------------
-        # TAB 3 — AI SUMMARY
-        # -------------------------------------------------
+            lat = event.get("lat")
+            lon = event.get("lon")
+
+            if lat is not None and lon is not None:
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=folium.Popup(popup_text, max_width=350),
+                    icon=folium.Icon(color=icon_colour),
+                ).add_to(marker_cluster)
+
+        html(threat_map._repr_html_(), height=520)
+
+        st.caption(f"Showing {len(filtered_events)} mapped incidents.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Tabs
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            ["Incidents", "MITRE", "IOC", "Entities", "Live Feed"]
+        )
+
+        with tab1:
+            mapped_df = pd.DataFrame(
+                [
+                    {
+                        "Title": event.get("title"),
+                        "Location": event.get("location"),
+                        "Region": event.get("region"),
+                        "Risk": event.get("risk"),
+                        "Score": event.get("score"),
+                        "Confidence": event.get("confidence"),
+                        "Category": event.get("category"),
+                        "Business Impact": ", ".join(event.get("business_impact", [])),
+                        "Source": event.get("source"),
+                        "Published": event.get("published_at"),
+                    }
+                    for event in filtered_events
+                ]
+            )
+
+            if not mapped_df.empty:
+                st.dataframe(mapped_df, use_container_width=True, height=420)
+            else:
+                st.info("No incidents match the selected filters.")
+
+        with tab2:
+            mitre_df = pd.DataFrame(
+                [
+                    {
+                        "Threat": e.get("title"),
+                        "Technique": e.get("mitre"),
+                        "Risk": e.get("risk"),
+                        "Category": e.get("category"),
+                        "Source": e.get("source"),
+                    }
+                    for e in filtered_events
+                    if e.get("mitre") != "N/A"
+                ]
+            )
+
+            if not mitre_df.empty:
+                st.dataframe(mitre_df, use_container_width=True, height=420)
+            else:
+                st.info("No MITRE mappings identified.")
+
         with tab3:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("🤖 AI Intelligence Summary")
-            st.markdown(ai_summary)
+            ioc_df = build_ioc_table(filtered_events + filtered_unmapped)
+            if not ioc_df.empty:
+                st.dataframe(ioc_df, use_container_width=True, height=420)
+            else:
+                st.info("No indicators extracted from current reporting.")
 
-            st.markdown("---")
-            st.subheader("📰 Live OSINT Feed")
+        with tab4:
+            people_df, org_df, location_df = build_entity_summary(filtered_events + filtered_unmapped)
 
+            c1, c2, c3 = st.columns(3)
+
+            with c1:
+                st.markdown("**People**")
+                if not people_df.empty:
+                    st.dataframe(people_df.head(15), use_container_width=True, height=300)
+                else:
+                    st.info("No people detected.")
+
+            with c2:
+                st.markdown("**Organisations**")
+                if not org_df.empty:
+                    st.dataframe(org_df.head(15), use_container_width=True, height=300)
+                else:
+                    st.info("No organisations detected.")
+
+            with c3:
+                st.markdown("**Locations**")
+                if not location_df.empty:
+                    st.dataframe(location_df.head(15), use_container_width=True, height=300)
+                else:
+                    st.info("No locations detected.")
+
+        with tab5:
             if live_articles:
                 for article in live_articles:
                     title = safe_get(article, "title", "Untitled")
@@ -954,213 +889,20 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
                     )
             else:
                 st.info("No live articles retrieved. Add a NewsAPI key in Streamlit secrets to enable this feed.")
-            st.markdown("</div>", unsafe_allow_html=True)
 
-        # -------------------------------------------------
-        # TAB 4 — INCIDENT DATA
-        # -------------------------------------------------
-        with tab4:
-            mapped_tab, unmapped_tab = st.tabs(["Mapped Incidents", "Unmapped Articles"])
-
-            with mapped_tab:
-                st.markdown('<div class="section-card">', unsafe_allow_html=True)
-                if filtered_events:
-                    mapped_df = pd.DataFrame(
-                        [
-                            {
-                                "Title": event.get("title"),
-                                "Location": event.get("location"),
-                                "Region": event.get("region"),
-                                "Risk": event.get("risk"),
-                                "Score": event.get("score"),
-                                "Confidence": event.get("confidence"),
-                                "Category": event.get("category"),
-                                "MITRE": event.get("mitre"),
-                                "Business Impact": ", ".join(event.get("business_impact", [])),
-                                "Watchlist Match": event.get("watchlist_match"),
-                                "Source": event.get("source"),
-                                "Published": event.get("published_at"),
-                                "URL": event.get("url"),
-                            }
-                            for event in filtered_events
-                        ]
-                    )
-                    st.dataframe(mapped_df, use_container_width=True, height=420)
-                else:
-                    st.info("No mapped incidents to display.")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            with unmapped_tab:
-                st.markdown('<div class="section-card">', unsafe_allow_html=True)
-                if filtered_unmapped:
-                    unmapped_df = pd.DataFrame(
-                        [
-                            {
-                                "Title": article.get("title"),
-                                "Source": article.get("source"),
-                                "Risk": article.get("risk"),
-                                "Score": article.get("score"),
-                                "Confidence": article.get("confidence"),
-                                "Category": article.get("category"),
-                                "MITRE": article.get("mitre"),
-                                "Detected Location": article.get("detected_location"),
-                                "Business Impact": ", ".join(article.get("business_impact", [])),
-                                "Published": article.get("published_at"),
-                                "Watchlist Match": article.get("watchlist_match"),
-                                "URL": article.get("url"),
-                            }
-                            for article in filtered_unmapped
-                        ]
-                    )
-                    st.dataframe(unmapped_df, use_container_width=True, height=420)
-                else:
-                    st.info("No unmapped articles match the selected filters.")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 5 — TRENDS
-        # -------------------------------------------------
-        with tab5:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Threat Trends")
-
-            history_df = load_history()
-            if not history_df.empty:
-                trend_df = (
-                    history_df.groupby("date")[["high_count", "medium_count", "low_count"]]
-                    .max()
-                    .reset_index()
-                )
-                trend_df = trend_df.set_index("date")
-                st.line_chart(trend_df, height=380)
-                st.dataframe(history_df, use_container_width=True, height=220)
-            else:
-                st.info("No history available yet. Generate more briefs to build a trend line.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 6 — REGIONAL ANALYSIS
-        # -------------------------------------------------
-        with tab6:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Regional Analysis")
-
-            region_df = pd.DataFrame(
-                [{"Region": region, "Incidents": count} for region, count in region_counts.items()]
+        # Trends at bottom
+        history_df = load_history()
+        if not history_df.empty:
+            st.markdown("### Threat Trends")
+            trend_df = (
+                history_df.groupby("date")[["high_count", "medium_count", "low_count"]]
+                .max()
+                .reset_index()
             )
-
-            if not region_df.empty:
-                region_df = region_df.sort_values("Incidents", ascending=False)
-                st.bar_chart(region_df.set_index("Region"), height=360)
-                st.dataframe(region_df, use_container_width=True, height=220)
-            else:
-                st.info("No regional breakdown available from current results.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 7 — MITRE MAPPING
-        # -------------------------------------------------
-        with tab7:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("🧬 MITRE ATT&CK Mapping")
-
-            mitre_df = pd.DataFrame(
-                [
-                    {
-                        "Threat": e.get("title"),
-                        "Technique": e.get("mitre"),
-                        "Risk": e.get("risk"),
-                        "Category": e.get("category"),
-                        "Source": e.get("source"),
-                    }
-                    for e in filtered_events
-                    if e.get("mitre") != "N/A"
-                ]
-            )
-
-            if not mitre_df.empty:
-                st.dataframe(mitre_df, use_container_width=True, height=420)
-            else:
-                st.info("No MITRE techniques identified in the filtered dataset.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 8 — IOC EXTRACTION
-        # -------------------------------------------------
-        with tab8:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("🔎 Indicator Extraction")
-
-            ioc_df = build_ioc_table(filtered_events + filtered_unmapped)
-
-            if not ioc_df.empty:
-                st.dataframe(ioc_df, use_container_width=True, height=420)
-                st.caption("Automatically extracted indicators from current reporting.")
-            else:
-                st.info("No indicators extracted from current reporting.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # TAB 9 — ENTITY TRACKING
-        # -------------------------------------------------
-        with tab9:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("👥 Entity Tracking")
-
-            people_df, org_df, location_df = build_entity_summary(filtered_events + filtered_unmapped)
-
-            ent_col1, ent_col2, ent_col3 = st.columns(3)
-
-            with ent_col1:
-                st.markdown("**People**")
-                if not people_df.empty:
-                    st.dataframe(people_df.head(15), use_container_width=True, height=300)
-                else:
-                    st.info("No people detected.")
-
-            with ent_col2:
-                st.markdown("**Organisations**")
-                if not org_df.empty:
-                    st.dataframe(org_df.head(15), use_container_width=True, height=300)
-                else:
-                    st.info("No organisations detected.")
-
-            with ent_col3:
-                st.markdown("**Locations**")
-                if not location_df.empty:
-                    st.dataframe(location_df.head(15), use_container_width=True, height=300)
-                else:
-                    st.info("No locations detected.")
-
-            st.markdown("---")
-            st.markdown("**Entity Preview**")
-
-            preview_entities = []
-            for item in (filtered_events + filtered_unmapped)[:5]:
-                title = item.get("title", "Untitled")
-                entities = item.get("entities", {})
-                people = entities.get("people", [])
-                orgs = entities.get("orgs", [])
-                locations = entities.get("locations", [])
-
-                preview_entities.append(
-                    {
-                        "Title": title,
-                        "People": ", ".join(people[:5]),
-                        "Organisations": ", ".join(orgs[:5]),
-                        "Locations": ", ".join(locations[:5]),
-                    }
-                )
-
-            if preview_entities:
-                preview_df = pd.DataFrame(preview_entities)
-                st.dataframe(preview_df, use_container_width=True, height=260)
-            else:
-                st.info("No entity preview available.")
-            st.markdown("</div>", unsafe_allow_html=True)
+            trend_df = trend_df.set_index("date")
+            st.line_chart(trend_df, height=260)
 
     except Exception as e:
         st.error(f"Error: {e}")
-
 else:
-    st.info("Use the controls in the sidebar, then click 'Generate Intelligence Brief' to load the platform.")
+    st.info("Use the controls in the sidebar, then click Generate Intelligence Brief.")
