@@ -14,7 +14,7 @@ df = pd.DataFrame({
     "risk": [80, 95, 60, 40]
 })
 
-# 🎯 Size + color logic
+# 🎯 Clean Plotly map (no fragile updates)
 fig = px.scatter_mapbox(
     df,
     lat="lat",
@@ -24,6 +24,7 @@ fig = px.scatter_mapbox(
     hover_name="incident",
     zoom=1.2,
     height=600,
+    size_max=40,
     color_discrete_map={
         "Critical": "#ff4d6d",
         "High": "#ff8c42",
@@ -32,22 +33,12 @@ fig = px.scatter_mapbox(
     }
 )
 
-# 🖤 DARK PROFESSIONAL STYLE
+# 🖤 Dark professional theme
 fig.update_layout(
     mapbox_style="carto-darkmatter",
     margin=dict(l=0, r=0, t=0, b=0),
     paper_bgcolor="#0b0f14",
     plot_bgcolor="#0b0f14",
-)
-
-# ✨ Glow effect (soft halo)
-fig.update_traces(
-    marker=dict(
-        opacity=0.9,
-        sizemode="area",
-        sizeref=2.*max(df["risk"])/(40.**2),
-        line=dict(width=1, color="white")
-    )
 )
 
 st.plotly_chart(fig, use_container_width=True)
