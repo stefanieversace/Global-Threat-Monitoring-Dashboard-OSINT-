@@ -1,22 +1,17 @@
-import streamlit as st
-import pandas as pd
+st.subheader("🌍 Live Map")
 
-st.set_page_config(layout="wide")
+map_df = df.copy()
 
-st.title("TEST MAP DEBUG")
+# 🔥 FORCE CORRECT TYPES
+map_df["latitude"] = pd.to_numeric(map_df["lat"], errors="coerce")
+map_df["longitude"] = pd.to_numeric(map_df["lon"], errors="coerce")
 
-# Simple data
-df = pd.DataFrame({
-    "latitude": [51.5074, 40.7128],
-    "longitude": [-0.1278, -74.0060]
-})
+# 🔥 DEBUG (leave this in for now)
+st.write("DATA TYPES:")
+st.write(map_df.dtypes)
 
-st.write("DATA:")
-st.write(df)
+st.write("MAP DATA:")
+st.write(map_df[["latitude", "longitude"]])
 
-st.write("MAP BELOW:")
-
-# Force render
-st.map(df)
-
-st.write("DONE")
+# 🔥 ONLY pass clean columns
+st.map(map_df[["latitude", "longitude"]])
