@@ -33,151 +33,182 @@ st.set_page_config(
 )
 
 # =========================================================
-# CLEAN LIGHTWEIGHT STYLING
+# PREMIUM UI STYLING
 # =========================================================
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #f8fafc;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             color: #0f172a;
         }
 
-        .main {
-            padding-top: 0.5rem;
-        }
-
         .block-container {
-            max-width: 1220px;
-            padding-top: 1.3rem;
+            max-width: 1280px;
+            padding-top: 1.2rem;
             padding-bottom: 2rem;
         }
 
         section[data-testid="stSidebar"] {
-            background-color: #ffffff;
+            background: #ffffff;
             border-right: 1px solid #e2e8f0;
         }
 
-        .top-banner {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 1.5rem 1.5rem 1.25rem 1.5rem;
-            margin-bottom: 1.2rem;
+        .main-title-card {
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226,232,240,0.9);
+            border-radius: 24px;
+            padding: 1.7rem 1.8rem;
+            box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+            margin-bottom: 1.1rem;
         }
 
-        .top-banner h1 {
+        .main-title-card h1 {
             margin: 0;
-            font-size: 2rem;
-            font-weight: 600;
+            font-size: 2.15rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
             color: #0f172a;
         }
 
-        .top-banner p {
-            margin: 0.45rem 0 0 0;
-            color: #64748b;
-            font-size: 0.98rem;
+        .main-title-card p {
+            margin: 0.55rem 0 0 0;
+            color: #475569;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226,232,240,0.95);
+            border-radius: 22px;
+            padding: 1.2rem 1.25rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            margin-bottom: 1rem;
         }
 
         .soft-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.15rem;
+            border-radius: 20px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
             margin-bottom: 1rem;
         }
 
         .muted-card {
-            background: #f1f5f9;
+            background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1rem;
+            border-radius: 20px;
+            padding: 1.2rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
             margin-bottom: 1rem;
         }
 
-        .small-label {
+        .section-label {
             font-size: 0.76rem;
-            color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.09em;
+            color: #64748b;
             margin-bottom: 0.45rem;
+            font-weight: 600;
+        }
+
+        .metric-note {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: -0.15rem;
+            margin-bottom: 1rem;
         }
 
         [data-testid="stMetric"] {
-            background: #ffffff;
+            background: rgba(255,255,255,0.92);
             border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 0.8rem;
+            border-radius: 20px;
+            padding: 1rem 0.95rem;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.04);
         }
 
-        .alert-row {
-            background: #ffffff;
+        .alert-card {
+            border-radius: 18px;
+            padding: 0.95rem 1rem;
+            margin-bottom: 0.7rem;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.85rem 1rem;
-            margin-bottom: 0.65rem;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
         .alert-critical {
-            border-left: 4px solid #dc2626;
+            border-left: 5px solid #dc2626;
         }
 
         .alert-warning {
-            border-left: 4px solid #f59e0b;
+            border-left: 5px solid #f59e0b;
         }
 
         .alert-info {
-            border-left: 4px solid #2563eb;
+            border-left: 5px solid #2563eb;
         }
 
-        .brief-box {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.1rem;
-            line-height: 1.65;
+        .brief-content {
+            font-size: 0.97rem;
+            line-height: 1.75;
+            color: #1e293b;
         }
 
-        .ai-box {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.1rem;
-            line-height: 1.65;
+        .ai-content {
+            font-size: 0.96rem;
+            line-height: 1.75;
+            color: #1e293b;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.32rem 0.7rem;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #3730a3;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.4rem;
+            margin-bottom: 0.4rem;
         }
 
         .news-card {
-            background: #ffffff;
+            background: rgba(255,255,255,0.95);
             border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 0.95rem 1rem;
-            margin-bottom: 0.85rem;
+            border-radius: 20px;
+            padding: 1rem 1.05rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
         .news-title {
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #0f172a;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.28rem;
         }
 
         .news-meta {
             font-size: 0.82rem;
             color: #64748b;
-            margin-bottom: 0.45rem;
+            margin-bottom: 0.55rem;
         }
 
         .stTabs [data-baseweb="tab-list"] {
-            gap: 12px;
+            gap: 16px;
+            padding-bottom: 0.35rem;
         }
 
         .stTabs [data-baseweb="tab"] {
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.25rem 0.1rem 0.55rem 0.1rem;
             background: transparent;
             border: none;
-            color: #64748b;
-            font-weight: 500;
-            padding-left: 0.2rem;
-            padding-right: 0.2rem;
         }
 
         .stTabs [aria-selected="true"] {
@@ -187,30 +218,47 @@ st.markdown(
 
         div[data-testid="stDataFrame"] {
             border: 1px solid #e2e8f0;
-            border-radius: 14px;
+            border-radius: 18px;
             overflow: hidden;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
-        .caption-line {
-            color: #64748b;
+        .small-caption {
             font-size: 0.9rem;
-            margin-top: -0.2rem;
+            color: #64748b;
+            margin-top: -0.1rem;
             margin-bottom: 1rem;
+        }
+
+        .sidebar-tip {
+            font-size: 0.84rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .recommendation-item {
+            padding: 0.65rem 0.8rem;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 0.55rem;
         }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+
 # =========================================================
 # HEADER
 # =========================================================
 st.markdown(
     """
-    <div class="top-banner">
+    <div class="main-title-card">
         <h1>Global Intelligence Briefing</h1>
         <p>
-            Real-time monitoring of global events, operational risks, and emerging threats.
+            Operational intelligence for risk monitoring, event security, reputational awareness,
+            and decision support across fast-moving global developments.
         </p>
     </div>
     """,
@@ -218,9 +266,10 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="caption-line">Live monitoring • risk prioritisation • executive-style intelligence outputs</div>',
+    '<div class="small-caption">Live monitoring • risk prioritisation • analyst outputs • executive-ready briefing</div>',
     unsafe_allow_html=True,
 )
+
 
 # =========================================================
 # SECRETS / CLIENTS
@@ -235,6 +284,7 @@ if OPENAI_API_KEY and OpenAI is not None:
     except Exception:
         openai_client = None
 
+
 # =========================================================
 # NLP LOADER
 # =========================================================
@@ -247,7 +297,9 @@ def load_nlp():
     except Exception:
         return None
 
+
 nlp = load_nlp()
+
 
 # =========================================================
 # CONSTANTS
@@ -266,18 +318,19 @@ MITRE_MAPPING = {
 }
 
 IOC_PATTERNS = {
-    "ipv4": r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
-    "domain": r"\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b",
-    "email": r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
-    "url": r"https?://[^\s]+",
-    "sha256": r"\b[a-fA-F0-9]{64}\b",
-    "md5": r"\b[a-fA-F0-9]{32}\b",
-    "cve": r"\bCVE-\d{4}-\d{4,7}\b",
+    "ipv4": r"\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b",
+    "domain": r"\\b(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}\\b",
+    "email": r"\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b",
+    "url": r"https?://[^\\s]+",
+    "sha256": r"\\b[a-fA-F0-9]{64}\\b",
+    "md5": r"\\b[a-fA-F0-9]{32}\\b",
+    "cve": r"\\bCVE-\\d{4}-\\d{4,7}\\b",
 }
 
 DEFAULT_NEWS_QUERY = (
     '("cyber attack" OR protest OR conflict OR unrest OR ransomware OR breach OR explosion OR disruption OR venue OR concert OR stadium)'
 )
+
 
 # =========================================================
 # HELPERS
@@ -287,9 +340,7 @@ def safe_get(item: Dict[str, Any], key: str, default: Any = "") -> Any:
 
 
 def normalise_datetime(value: Any) -> str:
-    if not value:
-        return "N/A"
-    return str(value)
+    return str(value) if value else "N/A"
 
 
 def map_to_mitre(text: str) -> str:
@@ -366,31 +417,24 @@ Return only the category name.
 def generate_ai_summary(articles: List[Dict[str, Any]]) -> str:
     if not articles:
         return (
-            "### Key Developments\n"
-            "- No significant live developments retrieved.\n\n"
-            "### Risk Assessment\n"
-            "- Overall Risk: Low\n"
-            "- Rationale: No meaningful live reporting was available for synthesis.\n\n"
-            "### Analyst Insight\n"
-            "Maintain standard monitoring posture and continue scheduled review cycles."
+            "Key Developments\n"
+            "• No significant live developments retrieved.\n\n"
+            "Risk Assessment\n"
+            "Overall Risk: Low\n"
+            "Drivers: No meaningful live reporting was available for synthesis.\n\n"
+            "Analyst Insight\n"
+            "Maintain standard monitoring posture and continue routine review cycles."
         )
 
     if not openai_client:
-        headlines = []
-        for article in articles[:5]:
-            title = safe_get(article, "title", "Untitled")
-            source = safe_get(safe_get(article, "source", {}), "name", "Unknown source")
-            headlines.append(f"- {title} ({source})")
-
         return (
-            "### Key Developments\n"
-            + "\n".join(headlines[:3])
-            + "\n\n### Risk Assessment\n"
-            "- Overall Risk: Medium\n"
-            "- Rationale: Current live reporting indicates active developments requiring continued monitoring.\n\n"
-            "### Analyst Insight\n"
-            "Recent reporting suggests a mixed risk environment spanning operational, reputational, and digital concerns. "
-            "Analysts should monitor geographic clustering, watchlist matches, and business impact indicators."
+            "Key Developments\n"
+            "• Live reporting was retrieved but the AI summary service was unavailable.\n\n"
+            "Risk Assessment\n"
+            "Overall Risk: Medium\n"
+            "Drivers: Live items are present and should be manually reviewed.\n\n"
+            "Analyst Insight\n"
+            "Continue monitoring the latest reporting and review the live feed directly for time-sensitive developments."
         )
 
     text_blob = "\n".join(
@@ -403,15 +447,33 @@ def generate_ai_summary(articles: List[Dict[str, Any]]) -> str:
     )
 
     prompt = f"""
-You are an intelligence analyst supporting operational decision-making.
+You are a senior intelligence analyst supporting operational security teams.
 
-Based on the reporting below, produce:
+Write a concise, professional intelligence briefing.
 
-1. Key Developments (3 bullet points)
-2. Risk Assessment (overall risk + short reason)
-3. Analyst Insight (2-3 sentences, concise and professional)
+Do NOT use markdown symbols.
 
-Reporting:
+Format EXACTLY like this:
+
+Key Developments
+• bullet
+• bullet
+• bullet
+
+Risk Assessment
+Overall Risk: High/Medium/Low
+Drivers: short explanation
+
+Analyst Insight
+2-3 sentences max, clear and confident
+
+Focus on:
+- operational disruption
+- venue or event risk
+- reputational impact
+- cyber threats
+
+Data:
 {text_blob}
 """
 
@@ -424,12 +486,12 @@ Reporting:
         return response.choices[0].message.content.strip()
     except Exception:
         return (
-            "### Key Developments\n"
-            "- Live reporting was retrieved but the AI summary service was unavailable.\n\n"
-            "### Risk Assessment\n"
-            "- Overall Risk: Medium\n"
-            "- Rationale: Live items are present and should be manually reviewed.\n\n"
-            "### Analyst Insight\n"
+            "Key Developments\n"
+            "• Live reporting was retrieved but the AI summary service was unavailable.\n\n"
+            "Risk Assessment\n"
+            "Overall Risk: Medium\n"
+            "Drivers: Live items are present and should be manually reviewed.\n\n"
+            "Analyst Insight\n"
             "Continue monitoring the latest reporting and review the live feed directly for time-sensitive developments."
         )
 
@@ -478,14 +540,12 @@ def extract_entities(text: str) -> Dict[str, List[str]]:
             doc = nlp(text)
             people = sorted(set(ent.text for ent in doc.ents if ent.label_ == "PERSON"))
             orgs = sorted(set(ent.text for ent in doc.ents if ent.label_ == "ORG"))
-            locations = sorted(
-                set(ent.text for ent in doc.ents if ent.label_ in ["GPE", "LOC", "FAC"])
-            )
+            locations = sorted(set(ent.text for ent in doc.ents if ent.label_ in ["GPE", "LOC", "FAC"]))
             return {"people": people, "orgs": orgs, "locations": locations}
         except Exception:
             pass
 
-    capitalised = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text)
+    capitalised = re.findall(r"\\b[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*\\b", text)
     unique = sorted(set(capitalised))
     return {"people": unique[:5], "orgs": [], "locations": []}
 
@@ -534,7 +594,7 @@ def evaluate_alerts(brief: str, mapped_events: List[Dict[str, Any]], watchlist_m
         alerts.append({"level": "WARNING", "message": "High-profile individual or executive-related reporting requires review."})
 
     if reputational_impacts:
-        alerts.append({"level": "INFO", "message": "Reputationally sensitive reporting present in the current cycle."})
+        alerts.append({"level": "INFO", "message": "Reputationally sensitive reporting is present in the current cycle."})
 
     if cyber_impacts or ("cyber" in (brief or "").lower()):
         alerts.append({"level": "INFO", "message": "Cyber-related reporting is present in current monitoring."})
@@ -607,6 +667,35 @@ def add_enrichment_to_events(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
     return enriched_items
 
 
+def generate_recommendations(mapped_events, high_count, watchlist_matches):
+    actions = []
+
+    if high_count >= 3:
+        actions.append("Increase monitoring posture across high-risk regions")
+        actions.append("Review exposure to affected locations and operations")
+        actions.append("Escalate relevant items to security leadership or incident response")
+
+    if watchlist_matches > 0:
+        actions.append("Monitor watchlist-related developments closely")
+        actions.append("Assess potential impact to assets, personnel, or events")
+
+    venue_risks = [e for e in mapped_events if "Venue Operations" in e.get("business_impact", [])]
+    if venue_risks:
+        actions.append("Review upcoming events in affected locations")
+        actions.append("Coordinate with venue security teams where necessary")
+
+    cyber_risks = [e for e in mapped_events if e.get("category") == "Cyber"]
+    if cyber_risks:
+        actions.append("Increase monitoring for phishing, intrusion, or cyber disruption activity")
+        actions.append("Validate current digital security controls and response readiness")
+
+    if not actions:
+        actions.append("Maintain standard monitoring posture")
+        actions.append("Continue routine intelligence review cycle")
+
+    return list(dict.fromkeys(actions))[:5]
+
+
 def render_alerts(alerts: List[Dict[str, str]]) -> None:
     if not alerts:
         return
@@ -628,12 +717,26 @@ def render_alerts(alerts: List[Dict[str, str]]) -> None:
 
         st.markdown(
             f"""
-            <div class="alert-row {css_class}">
+            <div class="alert-card {css_class}">
                 {icon} <strong>{message}</strong>
             </div>
             """,
             unsafe_allow_html=True,
         )
+
+
+def format_ai_output(text: str) -> str:
+    if not text:
+        return ""
+
+    html_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    html_text = html_text.replace("\n", "<br>")
+
+    html_text = html_text.replace("Key Developments", "<strong>Key Developments</strong>")
+    html_text = html_text.replace("Risk Assessment", "<strong>Risk Assessment</strong>")
+    html_text = html_text.replace("Analyst Insight", "<strong>Analyst Insight</strong>")
+
+    return html_text
 
 
 # =========================================================
@@ -664,10 +767,17 @@ with st.sidebar:
     live_news_query = st.text_area(
         "Live news query",
         value=DEFAULT_NEWS_QUERY,
-        height=110,
+        height=120,
+    )
+
+    st.markdown("---")
+    st.markdown(
+        '<div class="sidebar-tip">Use the filters to narrow the monitoring view, then generate a fresh intelligence cycle.</div>',
+        unsafe_allow_html=True,
     )
 
 watchlist_terms = [term.strip() for term in watchlist_input.split(",") if term.strip()]
+
 
 # =========================================================
 # MAIN
@@ -696,41 +806,78 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
         top_region = max(region_counts, key=region_counts.get) if region_counts else "N/A"
         priority_score = len([e for e in mapped_events if e.get("risk") == "HIGH"]) * 10 + (watchlist_matches * 5)
 
+        confidence = "Medium"
+        if high_count >= 3:
+            confidence = "High"
+        elif len(mapped_events) < 3:
+            confidence = "Low"
+
         alerts = evaluate_alerts(brief, mapped_events, watchlist_matches)
+        actions = generate_recommendations(mapped_events, high_count, watchlist_matches)
 
         # Metrics
-        col1, col2, col3, col4, col5 = st.columns(5)
-        col1.metric("High Risk", high_count)
-        col2.metric("Medium Risk", medium_count)
-        col3.metric("Low Risk", low_count)
-        col4.metric("Priority Score", priority_score)
-        col5.metric("Top Region", top_region)
+        st.markdown("### Monitoring Snapshot")
+        st.markdown('<div class="metric-note">A quick view of current reporting volume, severity, and priority.</div>', unsafe_allow_html=True)
+
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+        m1.metric("High Risk", high_count)
+        m2.metric("Medium Risk", medium_count)
+        m3.metric("Low Risk", low_count)
+        m4.metric("Priority Score", priority_score)
+        m5.metric("Top Region", top_region)
+        m6.metric("Confidence", confidence)
 
         st.markdown("")
 
         # Alerts
         render_alerts(alerts)
 
-        # Top split layout
-        left_col, right_col = st.columns([1.25, 1])
+        # Brief + AI Summary
+        left_col, right_col = st.columns([1.15, 1], gap="large")
 
         with left_col:
             st.markdown("### Intelligence Brief")
-            st.markdown(f'<div class="brief-box">{brief.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="soft-card brief-content">
+                    {brief.replace(chr(10), "<br>")}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         with right_col:
             st.markdown("### AI Summary")
-            st.markdown(f'<div class="ai-box">{ai_summary.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="muted-card ai-content">
+                    {format_ai_output(ai_summary)}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-        # Key judgements
-        if key_judgements:
+        # Recommendations + Judgements
+        lower_left, lower_right = st.columns([1, 1], gap="large")
+
+        with lower_left:
+            st.markdown("### Recommended Actions")
+            st.markdown('<div class="soft-card">', unsafe_allow_html=True)
+            for action in actions:
+                st.markdown(f'<div class="recommendation-item">• {action}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with lower_right:
             st.markdown("### Key Judgements")
             st.markdown('<div class="soft-card">', unsafe_allow_html=True)
-            for idx, judgement in enumerate(key_judgements[:3], start=1):
-                st.markdown(f"**{idx}.** {judgement}")
-            st.markdown("</div>", unsafe_allow_html=True)
+            if key_judgements:
+                for idx, judgement in enumerate(key_judgements[:3], start=1):
+                    st.markdown(f"**{idx}.** {judgement}")
+            else:
+                st.markdown("No key judgements were returned for this cycle.")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        # Map
+        # Filtered events
         filtered_events = [
             event for event in mapped_events
             if event.get("risk") in selected_risks and event.get("category") in selected_categories
@@ -741,8 +888,9 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             if article.get("risk") in selected_risks and article.get("category") in selected_categories
         ]
 
+        # Map
         st.markdown("### Global Map")
-        st.markdown('<div class="soft-card">', unsafe_allow_html=True)
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
         threat_map = folium.Map(location=[20, 0], zoom_start=2, tiles="CartoDB positron")
         marker_cluster = MarkerCluster().add_to(threat_map)
@@ -762,25 +910,28 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             )
 
             if event.get("risk") == "HIGH":
-                icon_colour = "red"
+                color = "#dc2626"
             elif event.get("risk") == "MEDIUM":
-                icon_colour = "orange"
+                color = "#f59e0b"
             else:
-                icon_colour = "green"
+                color = "#16a34a"
 
             lat = event.get("lat")
             lon = event.get("lon")
 
             if lat is not None and lon is not None:
-                folium.Marker(
+                folium.CircleMarker(
                     location=[lat, lon],
-                    popup=folium.Popup(popup_text, max_width=350),
-                    icon=folium.Icon(color=icon_colour),
+                    radius=6,
+                    color=color,
+                    fill=True,
+                    fill_color=color,
+                    fill_opacity=0.75,
+                    popup=folium.Popup(popup_text, max_width=360),
                 ).add_to(marker_cluster)
 
-        html(threat_map._repr_html_(), height=520)
-
-        st.caption(f"Showing {len(filtered_events)} mapped incidents.")
+        html(threat_map._repr_html_(), height=530)
+        st.caption(f"Showing {len(filtered_events)} mapped incidents after filters.")
         st.markdown("</div>", unsafe_allow_html=True)
 
         # Tabs
@@ -808,7 +959,7 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             )
 
             if not mapped_df.empty:
-                st.dataframe(mapped_df, use_container_width=True, height=420)
+                st.dataframe(mapped_df, use_container_width=True, height=430)
             else:
                 st.info("No incidents match the selected filters.")
 
@@ -828,21 +979,21 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             )
 
             if not mitre_df.empty:
-                st.dataframe(mitre_df, use_container_width=True, height=420)
+                st.dataframe(mitre_df, use_container_width=True, height=430)
             else:
                 st.info("No MITRE mappings identified.")
 
         with tab3:
             ioc_df = build_ioc_table(filtered_events + filtered_unmapped)
             if not ioc_df.empty:
-                st.dataframe(ioc_df, use_container_width=True, height=420)
+                st.dataframe(ioc_df, use_container_width=True, height=430)
             else:
                 st.info("No indicators extracted from current reporting.")
 
         with tab4:
             people_df, org_df, location_df = build_entity_summary(filtered_events + filtered_unmapped)
 
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3 = st.columns(3, gap="large")
 
             with c1:
                 st.markdown("**People**")
@@ -880,7 +1031,7 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
                             <div class="news-title">{title}</div>
                             <div class="news-meta">{source_name} • {published}</div>
                             <div>{description}</div>
-                            <div style="margin-top:0.55rem;">
+                            <div style="margin-top:0.65rem;">
                                 <a href="{url}" target="_blank">Read full article</a>
                             </div>
                         </div>
@@ -890,7 +1041,7 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
             else:
                 st.info("No live articles retrieved. Add a NewsAPI key in Streamlit secrets to enable this feed.")
 
-        # Trends at bottom
+        # Trend line
         history_df = load_history()
         if not history_df.empty:
             st.markdown("### Threat Trends")
@@ -900,9 +1051,20 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
                 .reset_index()
             )
             trend_df = trend_df.set_index("date")
-            st.line_chart(trend_df, height=260)
+            st.line_chart(trend_df, height=270)
 
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    st.info("Use the controls in the sidebar, then click Generate Intelligence Brief.")
+    st.markdown(
+        """
+        <div class="glass-card">
+            <div class="section-label">Ready</div>
+            <div style="font-size:1rem; color:#334155; line-height:1.7;">
+                Use the controls in the sidebar, then click <strong>Generate Intelligence Brief</strong>
+                to run a fresh monitoring cycle.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
