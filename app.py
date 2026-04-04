@@ -308,3 +308,31 @@ if st.button("Generate Intelligence Brief", use_container_width=True):
 
 else:
     st.info("Use the controls in the sidebar, then click 'Generate Intelligence Brief' to load the dashboard.")
+
+import streamlit as st
+
+st.title("🌍 Global Threat Intelligence Dashboard")
+
+# 🚨 NEW SECTION — THIS IS THE UPGRADE
+st.header("🧾 Daily Intelligence Brief")
+
+st.subheader("🔴 Key Developments")
+st.markdown("""
+- Civil unrest reported in Paris affecting transport hubs  
+- Cyber phishing campaign targeting financial institutions  
+""")
+
+st.subheader("⚠️ Risk Assessment")
+st.markdown("""
+- Operational Risk: **High**  
+- Geographic Impact: **Europe**  
+- Affected Sectors: **Media, Finance**  
+""")
+
+st.subheader("🧠 Analyst Insight")
+st.markdown("""
+Current developments may disrupt large-scale events and financial operations. 
+Monitoring escalation patterns and response measures is recommended.
+""")
+
+st.divider()
