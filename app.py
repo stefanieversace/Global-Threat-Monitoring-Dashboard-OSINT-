@@ -12,11 +12,27 @@ from streamlit_folium import st_folium
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-st.set_page_config(
-    page_title="Global Threat Monitoring Dashboard",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded",
+st.markdown("""
+<div style="
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 5px;
+    white-space: normal;
+    line-height: 1.2;
+">
+🌍 Global Threat Monitoring Dashboard
+</div>
+
+<div style="
+    text-align: center;
+    color: #9fb0cf;
+    font-size: 16px;
+    margin-bottom: 25px;
+">
+Executive-grade OSINT monitoring • SOC-style intelligence workflows
+</div>
+""", unsafe_allow_html=True)
 )
 
 # =========================================================
