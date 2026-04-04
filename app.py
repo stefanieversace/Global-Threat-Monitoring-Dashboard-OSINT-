@@ -1129,3 +1129,40 @@ st.markdown("---")
 st.caption(
     "Built for analyst-style monitoring. This version prioritises structured brief generation, stronger scoring, and clearer operational relevance over generic summarisation."
 )
+def make_timeline_chart(df: pd.DataFrame):
+    if df.empty:
+        return None
+
+    timeline = df.copy()
+
+    # 🔥 Fix datetime issues
+    timeline["published_dt"] = pd.to_datetime(
+        timeline["published_dt"], errors="coerce", utc=True
+    )
+
+    # 🔥 Use lowercase 'h'
+    timeline["hour"] = timeline["published_dt"].dt.floor("h")
+
+    agg = timeline.groupby(["hour", "severity"]).size().reset_index(name="count")
+
+    if agg.empty:
+        return None
+
+    fig = px.line(
+        agg,
+        x="hour",
+        y="count",
+        color="severity",
+        markers=True,
+        title="Threat Reporting Timeline",
+    )
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="white"),
+        margin=dict(l=10, r=10, t=40, b=10),
+        legend_title_text="Severity",
+    )
+
+    return fig
