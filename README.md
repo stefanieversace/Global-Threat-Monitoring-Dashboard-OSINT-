@@ -24,6 +24,23 @@ This project collects and analyses open-source news data to:
 * Highlight key trends and analyst judgements
 
 ---
+## 🧾 Example Intelligence Brief
+
+### 🔴 Key Developments
+- Civil unrest in Paris disrupting transport networks  
+- Ongoing phishing campaign targeting financial institutions  
+
+### ⚠️ Risk Assessment
+- Operational Risk: High  
+- Geographic Impact: Europe  
+- Affected Sectors: Media, Finance  
+
+### 🧠 Analyst Insight
+
+These developments present potential disruption risks to live events and financial systems. 
+Organisations should monitor escalation and consider contingency planning.
+
+---
 
 ## ⚙️ Features
 
