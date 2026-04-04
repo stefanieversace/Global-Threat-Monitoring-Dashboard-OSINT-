@@ -1,4 +1,3 @@
-import math
 import random
 from datetime import datetime, timedelta, timezone
 
@@ -7,6 +6,7 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
+
 # =========================================================
 # PAGE CONFIG
 # =========================================================
@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Threat Operations Platform",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # =========================================================
@@ -387,7 +387,7 @@ div[data-baseweb="input"] > div {
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # =========================================================
-# DATA MODEL
+# CONSTANTS
 # =========================================================
 SEVERITY_ORDER = {"Critical": 4, "High": 3, "Medium": 2, "Low": 1}
 SEVERITY_COLOR = {
@@ -460,6 +460,9 @@ ACTOR_LIBRARY = {
 }
 
 
+# =========================================================
+# DATA GENERATION
+# =========================================================
 def seed_everything(seed: int = 11) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -607,11 +610,10 @@ def generate_incidents() -> pd.DataFrame:
     df["mitre"] = df["title"].map(MITRE_TECHNIQUES)
     df["map_radius"] = df["risk_score"].apply(lambda x: 22000 + x * 600)
     df["color"] = df["severity"].map(SEVERITY_COLOR)
-    df = df.sort_values(["sev_rank", "risk_score", "opened_at"], ascending=[False, False, False]).reset_index(drop=True)
+    df = df.sort_values(
+        ["sev_rank", "risk_score", "opened_at"], ascending=[False, False, False]
+    ).reset_index(drop=True)
     return df
-
-
-INCIDENTS = generate_incidents()
 
 
 def generate_timeline(incident: pd.Series) -> list[dict]:
@@ -624,7 +626,6 @@ def generate_timeline(incident: pd.Series) -> list[dict]:
         {"time": (base + timedelta(minutes=13)).strftime("%H:%M UTC"), "event": f"Analyst {incident['analyst']} enriched with geo, IOC, and asset context."},
         {"time": (base + timedelta(minutes=17)).strftime("%H:%M UTC"), "event": f"Status updated to {incident['status']}; containment recommendation prepared."},
     ]
-
 
 
 def generate_logs(incident: pd.Series, count: int = 18) -> list[str]:
@@ -654,7 +655,6 @@ def generate_logs(incident: pd.Series, count: int = 18) -> list[str]:
     return lines
 
 
-
 def build_mitre_matrix(df: pd.DataFrame) -> pd.DataFrame:
     tactics = [
         "Initial Access", "Execution", "Persistence", "Privilege Escalation",
@@ -674,6 +674,7 @@ def build_mitre_matrix(df: pd.DataFrame) -> pd.DataFrame:
     return mitre_df
 
 
+INCIDENTS = generate_incidents()
 MITRE_MATRIX = build_mitre_matrix(INCIDENTS)
 
 # =========================================================
@@ -684,6 +685,7 @@ if "selected_incident_id" not in st.session_state:
 
 if "escalation_log" not in st.session_state:
     st.session_state.escalation_log = []
+
 
 # =========================================================
 # HELPERS
@@ -698,10 +700,8 @@ def severity_badge(severity: str) -> str:
     return f'<span class="{cls}">{severity}</span>'
 
 
-
 def select_incident(incident_id: str) -> None:
     st.session_state.selected_incident_id = incident_id
-
 
 
 def get_selected_incident(df: pd.DataFrame) -> pd.Series:
@@ -709,7 +709,6 @@ def get_selected_incident(df: pd.DataFrame) -> pd.Series:
     if row.empty:
         return df.iloc[0]
     return row.iloc[0]
-
 
 
 def filtered_incidents(df: pd.DataFrame, severities: list[str], sources: list[str], query: str) -> pd.DataFrame:
@@ -729,7 +728,6 @@ def filtered_incidents(df: pd.DataFrame, severities: list[str], sources: list[st
         )
         out = out[mask]
     return out.sort_values(["sev_rank", "risk_score"], ascending=[False, False]).reset_index(drop=True)
-
 
 
 def render_hero(df: pd.DataFrame) -> None:
@@ -759,12 +757,13 @@ def render_hero(df: pd.DataFrame) -> None:
     )
 
 
-
 def render_queue(df: pd.DataFrame) -> None:
-    st.markdown('<div class="section-kicker">Analyst workflow</div><div class="section-title">Auto-prioritised triage queue</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-kicker">Analyst workflow</div><div class="section-title">Auto-prioritised triage queue</div>',
+        unsafe_allow_html=True,
+    )
     for _, row in df.iterrows():
-        left = st.container()
-        cols = left.columns([7, 2, 2])
+        cols = st.columns([7, 2, 2])
         with cols[0]:
             st.markdown(
                 f"""
@@ -786,17 +785,20 @@ def render_queue(df: pd.DataFrame) -> None:
                 st.rerun()
 
 
-
 def render_map(df: pd.DataFrame) -> None:
-    st.markdown('<div class="section-kicker">Spatial context</div><div class="section-title">Global incident map</div>', unsafe_allow_html=True)
-    st.caption("Use the queue or map-linked selector below to open a case. Streamlit maps are not deeply click-native, so the app uses a synced incident selector for reliable drill-down.")
+    st.markdown(
+        '<div class="section-kicker">Spatial context</div><div class="section-title">Global incident map</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Map fixed to work without a Mapbox token.")
 
     map_df = df.copy()
     map_df["tooltip"] = map_df.apply(
-        lambda r: f"{r['incident_id']}\n{r['title']}\n{r['region']}\nSeverity: {r['severity']}\nRisk: {r['risk_score']}", axis=1
+        lambda r: f"{r['incident_id']}\n{r['title']}\n{r['region']}\nSeverity: {r['severity']}\nRisk: {r['risk_score']}",
+        axis=1,
     )
 
-    layer = pdk.Layer(
+    scatter_layer = pdk.Layer(
         "ScatterplotLayer",
         data=map_df,
         get_position="[lon, lat]",
@@ -804,7 +806,7 @@ def render_map(df: pd.DataFrame) -> None:
         get_fill_color="color",
         pickable=True,
         stroked=True,
-        get_line_color=[255, 255, 255, 120],
+        get_line_color=[255, 255, 255, 140],
         line_width_min_pixels=1,
     )
 
@@ -814,23 +816,34 @@ def render_map(df: pd.DataFrame) -> None:
         get_position="[lon, lat]",
         get_text="incident_id",
         get_size=14,
-        get_color=[232, 237, 243, 180],
+        get_color=[232, 237, 243, 190],
         get_alignment_baseline="bottom",
         get_pixel_offset=[0, -18],
     )
 
     deck = pdk.Deck(
-        map_style="mapbox://styles/mapbox/dark-v11",
-        initial_view_state=pdk.ViewState(latitude=22, longitude=8, zoom=1.2, pitch=18),
-        layers=[layer, text_layer],
+        layers=[scatter_layer, text_layer],
+        initial_view_state=pdk.ViewState(
+            latitude=20,
+            longitude=0,
+            zoom=1.2,
+            pitch=28,
+            bearing=8,
+        ),
         tooltip={"text": "{tooltip}"},
+        map_style=None,  # Important: works without Mapbox token
     )
+
     st.pydeck_chart(deck, use_container_width=True)
 
     selected_from_map = st.selectbox(
         "Open incident from map context",
         options=df["incident_id"].tolist(),
-        index=max(0, df.index[df["incident_id"] == st.session_state.selected_incident_id][0]) if st.session_state.selected_incident_id in df["incident_id"].values else 0,
+        index=(
+            df.index[df["incident_id"] == st.session_state.selected_incident_id][0]
+            if st.session_state.selected_incident_id in df["incident_id"].values
+            else 0
+        ),
         key="map_selector",
     )
     if selected_from_map != st.session_state.selected_incident_id:
@@ -838,10 +851,12 @@ def render_map(df: pd.DataFrame) -> None:
         st.rerun()
 
 
-
 def render_incident_overview(incident: pd.Series) -> None:
     actor = ACTOR_LIBRARY[incident["title"]]
-    st.markdown('<div class="section-kicker">Case file</div><div class="section-title">Incident overview</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-kicker">Case file</div><div class="section-title">Incident overview</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f"""
         <div class="panel">
@@ -867,39 +882,44 @@ def render_incident_overview(incident: pd.Series) -> None:
     )
 
 
-
 def render_timeline(incident: pd.Series) -> None:
-    st.markdown('<div class="section-kicker">Reasoning path</div><div class="section-title">Incident timeline</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-kicker">Reasoning path</div><div class="section-title">Incident timeline</div>',
+        unsafe_allow_html=True,
+    )
     timeline = generate_timeline(incident)
-    with st.container():
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        for item in timeline:
-            st.markdown(
-                f"""
-                <div class="timeline-item">
-                    <div class="timeline-time">{item['time']}</div>
-                    <div class="timeline-text">{item['event']}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
-
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    for item in timeline:
+        st.markdown(
+            f"""
+            <div class="timeline-item">
+                <div class="timeline-time">{item['time']}</div>
+                <div class="timeline-text">{item['event']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_logs(incident: pd.Series) -> None:
-    st.markdown('<div class="section-kicker">Telemetry</div><div class="section-title">SOC log stream</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-kicker">Telemetry</div><div class="section-title">SOC log stream</div>',
+        unsafe_allow_html=True,
+    )
     logs = generate_logs(incident)
-    log_html = '<div class="panel"><div class="log-shell">' + ''.join(logs) + '</div></div>'
+    log_html = '<div class="panel"><div class="log-shell">' + "".join(logs) + "</div></div>"
     st.markdown(log_html, unsafe_allow_html=True)
-
 
 
 def render_actor_card(incident: pd.Series) -> None:
     actor = ACTOR_LIBRARY[incident["title"]]
-    st.markdown('<div class="section-kicker">Enrichment</div><div class="section-title">Threat actor profile</div>', unsafe_allow_html=True)
     iocs = "<br>".join(actor["ioc"])
     tactics = ", ".join(actor["tactics"])
+    st.markdown(
+        '<div class="section-kicker">Enrichment</div><div class="section-title">Threat actor profile</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f"""
         <div class="actor-card">
@@ -920,37 +940,38 @@ def render_actor_card(incident: pd.Series) -> None:
     )
 
 
-
 def render_actions(incident: pd.Series) -> None:
-    st.markdown('<div class="section-kicker">Response</div><div class="section-title">Operator actions</div>', unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            if st.button("Escalate incident", key=f"esc_{incident['incident_id']}"):
-                entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Escalated {incident['incident_id']} to L2 / IR"
-                st.session_state.escalation_log.insert(0, entry)
-        with c2:
-            if st.button("Recommend containment", key=f"cont_{incident['incident_id']}"):
-                entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Recommended containment for {incident['incident_id']}"
-                st.session_state.escalation_log.insert(0, entry)
-        with c3:
-            if st.button("Generate exec summary", key=f"sum_{incident['incident_id']}"):
-                entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Generated leadership summary for {incident['incident_id']}"
-                st.session_state.escalation_log.insert(0, entry)
+    st.markdown(
+        '<div class="section-kicker">Response</div><div class="section-title">Operator actions</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
 
-        st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
-        if st.session_state.escalation_log:
-            for item in st.session_state.escalation_log[:6]:
-                st.markdown(f"- {item}")
-        else:
-            st.markdown('<div class="small-note">No operator actions taken yet.</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button("Escalate incident", key=f"esc_{incident['incident_id']}"):
+            entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Escalated {incident['incident_id']} to L2 / IR"
+            st.session_state.escalation_log.insert(0, entry)
+    with c2:
+        if st.button("Recommend containment", key=f"cont_{incident['incident_id']}"):
+            entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Recommended containment for {incident['incident_id']}"
+            st.session_state.escalation_log.insert(0, entry)
+    with c3:
+        if st.button("Generate exec summary", key=f"sum_{incident['incident_id']}"):
+            entry = f"{datetime.now(timezone.utc).strftime('%H:%M UTC')} · Generated leadership summary for {incident['incident_id']}"
+            st.session_state.escalation_log.insert(0, entry)
 
+    st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
+    if st.session_state.escalation_log:
+        for item in st.session_state.escalation_log[:6]:
+            st.markdown(f"- {item}")
+    else:
+        st.markdown('<div class="small-note">No operator actions taken yet.</div>', unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_exec_summary(incident: pd.Series) -> None:
-    st.markdown('<div class="section-kicker">Leadership brief</div><div class="section-title">Executive summary</div>', unsafe_allow_html=True)
     actor = ACTOR_LIBRARY[incident["title"]]
     summary = (
         f"{incident['incident_id']} is a {incident['severity'].lower()}-severity {incident['title'].lower()} case affecting "
@@ -959,11 +980,15 @@ def render_exec_summary(incident: pd.Series) -> None:
         f"the {actor['actor']} profile. Recommended next step: maintain containment pressure, validate identity and endpoint exposure, "
         f"and prepare stakeholder comms if business impact widens."
     )
+    st.markdown(
+        '<div class="section-kicker">Leadership brief</div><div class="section-title">Executive summary</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(f'<div class="panel" style="line-height:1.7;">{summary}</div>', unsafe_allow_html=True)
 
 
 # =========================================================
-# SIDEBAR FILTERS
+# SIDEBAR
 # =========================================================
 with st.sidebar:
     st.markdown("### Controls")
@@ -980,23 +1005,25 @@ with st.sidebar:
     search_text = st.text_input("Search incidents", placeholder="INC-24051, London, OAuth...")
 
 DF = filtered_incidents(INCIDENTS, severity_filter, source_filter, search_text)
-selected = get_selected_incident(DF if not DF.empty else INCIDENTS)
+display_df = DF if not DF.empty else INCIDENTS
+selected = get_selected_incident(display_df)
 
 # =========================================================
 # HEADER + METRICS
 # =========================================================
-render_hero(DF if not DF.empty else INCIDENTS)
+render_hero(display_df)
 st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
 with m1:
-    st.metric("Open incidents", len(DF))
+    st.metric("Open incidents", len(display_df))
 with m2:
-    st.metric("Critical risk avg", int(DF[DF["severity"] == "Critical"]["risk_score"].mean()) if not DF[DF["severity"] == "Critical"].empty else 0)
+    crit = display_df[display_df["severity"] == "Critical"]["risk_score"]
+    st.metric("Critical risk avg", int(crit.mean()) if not crit.empty else 0)
 with m3:
-    st.metric("Correlated events", f"{int(DF['events'].sum()):,}")
+    st.metric("Correlated events", f"{int(display_df['events'].sum()):,}")
 with m4:
-    st.metric("Mean confidence", f"{int(DF['confidence'].mean())}%" if not DF.empty else "0%")
+    st.metric("Mean confidence", f"{int(display_df['confidence'].mean())}%")
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -1006,11 +1033,14 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 left, right = st.columns([1.08, 1], gap="large")
 
 with left:
-    render_queue(DF if not DF.empty else INCIDENTS)
+    render_queue(display_df)
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    render_map(DF if not DF.empty else INCIDENTS)
+    render_map(display_df)
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    st.markdown('<div class="section-kicker">TTP landscape</div><div class="section-title">MITRE activity heat table</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-kicker">TTP landscape</div><div class="section-title">MITRE activity heat table</div>',
+        unsafe_allow_html=True,
+    )
     st.dataframe(MITRE_MATRIX, use_container_width=True)
 
 with right:
@@ -1029,10 +1059,10 @@ with right:
         render_actions(selected)
 
 # =========================================================
-# FOOTER NOTE
+# FOOTER
 # =========================================================
 st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 st.markdown(
-    '<div class="small-note">Production-grade portfolio demo notes: stateful incident drill-down, risk-based prioritisation, spatial context, MITRE enrichment, operator actions, and consistent premium UI styling suitable for a serious security product demo.</div>',
+    '<div class="small-note">Production-grade portfolio demo: stateful incident drill-down, risk-based prioritisation, spatial context, MITRE enrichment, operator actions, and a premium dark UI that works without a Mapbox token.</div>',
     unsafe_allow_html=True,
 )
