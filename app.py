@@ -12,27 +12,34 @@ from streamlit_folium import st_folium
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-st.markdown("""
-<div style="
-    font-size: 34px;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 4px;
-">
-Global Threat Monitor
-</div>
+# =========================
+# HEADER (FIXED - NO ERRORS)
+# =========================
 
-<div style="
-    text-align: center;
-    color: #9fb0cf;
-    font-size: 14px;
-    margin-bottom: 25px;
-">
-Real-time intelligence • Threat detection • Analyst workflows
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="
+        font-size: 38px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    ">
+    🌍 Global Threat Monitoring Dashboard
+    </div>
 
+    <div style="
+        text-align: center;
+        color: #9fb0cf;
+        font-size: 15px;
+        margin-bottom: 25px;
+    ">
+    Executive-grade OSINT monitoring • SOC-style intelligence workflows
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
 
 # =========================================================
 # STYLING
