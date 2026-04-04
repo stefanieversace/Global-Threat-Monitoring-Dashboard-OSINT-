@@ -1,15 +1,13 @@
-import streamlit as st
-import pandas as pd
-import requests
-import plotly.express as px
-import plotly.graph_objects as go
+import html
+from datetime import datetime, timezone
+
 import folium
+import pandas as pd
+import plotly.express as px
+import requests
+import streamlit as st
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
-from datetime import datetime, timezone
-import re
-import html
-from io import StringIO
 
 # =========================================================
 # PAGE CONFIG
@@ -24,205 +22,202 @@ st.set_page_config(
 # =========================================================
 # STYLING
 # =========================================================
-st.markdown("""
-<style>
-:root {
-    --bg: #070b14;
-    --panel: rgba(18, 24, 38, 0.86);
-    --panel-2: rgba(12, 17, 28, 0.92);
-    --stroke: rgba(255,255,255,0.08);
-    --text: #eef2ff;
-    --muted: #a8b3cf;
-    --accent: #7c9cff;
-    --accent-2: #55e6c1;
-    --red: #ff5c7c;
-    --amber: #ffbf66;
-    --green: #5ce1a5;
-    --shadow: 0 20px 50px rgba(0,0,0,0.35);
-}
+st.markdown(
+    """
+    <style>
+    :root {
+        --bg: #060a12;
+        --panel: rgba(15, 22, 36, 0.92);
+        --panel-2: rgba(11, 17, 28, 0.96);
+        --stroke: rgba(255,255,255,0.08);
+        --text: #eef3ff;
+        --muted: #9fb0cf;
+        --accent: #8ea6ff;
+        --accent-2: #65e3c0;
+        --red: #ff6b86;
+        --amber: #ffc26b;
+        --green: #67e6a8;
+        --shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
 
-html, body, [class*="css"] {
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+    .stApp {
+        background:
+            radial-gradient(circle at top left, rgba(142,166,255,0.12), transparent 25%),
+            radial-gradient(circle at top right, rgba(101,227,192,0.08), transparent 20%),
+            linear-gradient(180deg, #050811 0%, #0a1221 100%);
+        color: var(--text);
+    }
 
-.stApp {
-    background:
-        radial-gradient(circle at top left, rgba(124,156,255,0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(85,230,193,0.10), transparent 22%),
-        linear-gradient(180deg, #05070d 0%, #0a1020 100%);
-    color: var(--text);
-}
+    html, body, [class*="css"] {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-.block-container {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-    max-width: 1500px;
-}
+    .block-container {
+        padding-top: 1.35rem;
+        padding-bottom: 2rem;
+        max-width: 1500px;
+    }
 
-h1, h2, h3, h4 {
-    color: var(--text) !important;
-    letter-spacing: -0.02em;
-}
+    h1, h2, h3, h4 {
+        color: var(--text) !important;
+        letter-spacing: -0.02em;
+    }
 
-.dashboard-title {
-    font-size: 2.35rem;
-    font-weight: 800;
-    line-height: 1.05;
-    margin-bottom: 0.25rem;
-}
+    .dashboard-title {
+        font-size: 2.45rem;
+        font-weight: 800;
+        line-height: 1.03;
+        margin-bottom: 0.15rem;
+    }
 
-.dashboard-subtitle {
-    color: var(--muted);
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
-}
+    .dashboard-subtitle {
+        color: var(--muted);
+        font-size: 1rem;
+        margin-bottom: 1.4rem;
+    }
 
-.panel {
-    background: linear-gradient(180deg, rgba(18,24,38,0.92), rgba(10,15,25,0.92));
-    border: 1px solid var(--stroke);
-    border-radius: 24px;
-    padding: 1rem 1rem 1rem 1rem;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(14px);
-}
+    .metric-card {
+        background: linear-gradient(180deg, rgba(17,24,39,0.98), rgba(10,15,27,0.98));
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 22px;
+        padding: 1rem 1rem 0.95rem 1rem;
+        box-shadow: var(--shadow);
+        min-height: 122px;
+    }
 
-.metric-card {
-    background: linear-gradient(180deg, rgba(18,24,38,0.96), rgba(11,16,27,0.96));
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 22px;
-    padding: 1rem 1rem 0.85rem 1rem;
-    box-shadow: var(--shadow);
-    min-height: 120px;
-}
+    .metric-label {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
 
-.metric-label {
-    color: var(--muted);
-    font-size: 0.86rem;
-    margin-bottom: 0.35rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
+    .metric-value {
+        color: white;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.0;
+        margin-bottom: 0.3rem;
+    }
 
-.metric-value {
-    color: white;
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1.0;
-    margin-bottom: 0.35rem;
-}
+    .metric-sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
 
-.metric-sub {
-    color: var(--muted);
-    font-size: 0.9rem;
-}
+    .panel {
+        background: linear-gradient(180deg, rgba(17,24,39,0.95), rgba(10,15,27,0.96));
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 24px;
+        padding: 1rem 1rem 1rem 1rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+    }
 
-.alert-card {
-    background: linear-gradient(180deg, rgba(14,20,34,0.98), rgba(9,13,24,0.98));
-    border: 1px solid rgba(255,255,255,0.06);
-    border-left: 5px solid #7c9cff;
-    border-radius: 18px;
-    padding: 0.9rem 1rem;
-    margin-bottom: 0.85rem;
-}
+    .alert-card {
+        background: linear-gradient(180deg, rgba(14,20,34,0.98), rgba(9,13,24,0.98));
+        border: 1px solid rgba(255,255,255,0.06);
+        border-left: 5px solid #8ea6ff;
+        border-radius: 18px;
+        padding: 0.95rem 1rem;
+        margin-bottom: 0.9rem;
+    }
 
-.alert-high {
-    border-left-color: #ff5c7c;
-}
+    .alert-high {
+        border-left-color: #ff6b86;
+    }
 
-.alert-medium {
-    border-left-color: #ffbf66;
-}
+    .alert-medium {
+        border-left-color: #ffc26b;
+    }
 
-.alert-low {
-    border-left-color: #5ce1a5;
-}
+    .alert-low {
+        border-left-color: #67e6a8;
+    }
 
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    margin-right: 0.35rem;
-    margin-top: 0.2rem;
-    border: 1px solid rgba(255,255,255,0.08);
-}
+    .badge {
+        display: inline-block;
+        padding: 0.26rem 0.62rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin-right: 0.35rem;
+        margin-top: 0.25rem;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
 
-.badge-high { background: rgba(255,92,124,0.16); color: #ffc0cb; }
-.badge-medium { background: rgba(255,191,102,0.16); color: #ffd9a3; }
-.badge-low { background: rgba(92,225,165,0.16); color: #baf5da; }
-.badge-neutral { background: rgba(124,156,255,0.16); color: #d5e0ff; }
+    .badge-high { background: rgba(255,107,134,0.16); color: #ffd0d9; }
+    .badge-medium { background: rgba(255,194,107,0.16); color: #ffe2b4; }
+    .badge-low { background: rgba(103,230,168,0.16); color: #d3ffe7; }
+    .badge-neutral { background: rgba(142,166,255,0.16); color: #dfe7ff; }
 
-.small-muted {
-    color: var(--muted);
-    font-size: 0.86rem;
-}
+    .small-muted {
+        color: var(--muted);
+        font-size: 0.88rem;
+    }
 
-hr {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    margin: 0.85rem 0 1rem 0;
-}
+    .brief-panel {
+        background: linear-gradient(180deg, rgba(18,24,38,0.98), rgba(9,14,24,0.98));
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 18px;
+        max-height: 460px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.65;
+        color: #e6ecff;
+    }
 
-div[data-testid="stDataFrame"], div[data-testid="stTable"] {
-    border-radius: 18px;
-    overflow: hidden;
-}
+    .footer-note {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-top: 1rem;
+    }
 
-div[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, rgba(10,14,24,0.98), rgba(8,11,20,0.98));
-    border-right: 1px solid rgba(255,255,255,0.06);
-}
+    div[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, rgba(10,14,24,0.98), rgba(8,11,20,0.98));
+        border-right: 1px solid rgba(255,255,255,0.06);
+    }
 
-st.subheader("🧠 Intelligence Brief")
-brief_text = build_brief(filtered_df)
-brief_html = f"""
-<div style='background: linear-gradient(180deg, rgba(18,24,38,0.96), rgba(10,15,25,0.96));
-border: 1px solid rgba(255,255,255,0.08);
-border-radius: 20px;
-padding: 20px;
-max-height: 420px;
-overflow-y: auto;
-white-space: pre-wrap;
-font-family: monospace;
-font-size: 13.5px;
-line-height: 1.6;
-color: #e8edff;'>
-{brief_text}
-</div>
-"""
-st.markdown(brief_html, unsafe_allow_html=True)
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div,
+    .stTextArea textarea {
+        background-color: rgba(255,255,255,0.03) !important;
+        color: white !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+    }
 
-}
+    .stDownloadButton button,
+    .stButton button,
+    .stLinkButton a {
+        background: linear-gradient(180deg, #95adff, #7594ff) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+    }
 
-st.download_button(
-    label="⬇ Download Intelligence Brief",
-    data=brief_text,
-    file_name="intelligence_brief.txt",
-    mime="text/plain"
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+        padding: 0.5rem 0.9rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    gap: 10px;
-}
-
-.stTabs [data-baseweb="tab"] {
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 0.5rem 0.9rem;
-}
-
-.footer-note {
-    color: var(--muted);
-    font-size: 0.82rem;
-    margin-top: 1rem;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # =========================================================
-# CONSTANTS / KEYWORDS / LOOKUPS
+# CONSTANTS
 # =========================================================
 LOCATION_COORDS = {
     "london": (51.5074, -0.1278),
@@ -230,15 +225,15 @@ LOCATION_COORDS = {
     "berlin": (52.5200, 13.4050),
     "rome": (41.9028, 12.4964),
     "madrid": (40.4168, -3.7038),
-    "brussels": (50.8503, 4.3517),
     "amsterdam": (52.3676, 4.9041),
+    "brussels": (50.8503, 4.3517),
     "new york": (40.7128, -74.0060),
     "washington": (38.9072, -77.0369),
     "los angeles": (34.0522, -118.2437),
     "san francisco": (37.7749, -122.4194),
     "chicago": (41.8781, -87.6298),
-    "moscow": (55.7558, 37.6173),
     "kyiv": (50.4501, 30.5234),
+    "moscow": (55.7558, 37.6173),
     "beijing": (39.9042, 116.4074),
     "shanghai": (31.2304, 121.4737),
     "tokyo": (35.6762, 139.6503),
@@ -248,14 +243,12 @@ LOCATION_COORDS = {
     "singapore": (1.3521, 103.8198),
     "sydney": (-33.8688, 151.2093),
     "melbourne": (-37.8136, 144.9631),
-    "canberra": (-35.2809, 149.1300),
-    "bali": (-8.3405, 115.0920),
     "jakarta": (-6.2088, 106.8456),
+    "bali": (-8.3405, 115.0920),
     "manila": (14.5995, 120.9842),
     "bangkok": (13.7563, 100.5018),
     "delhi": (28.6139, 77.2090),
     "mumbai": (19.0760, 72.8777),
-    "karachi": (24.8607, 67.0011),
     "tehran": (35.6892, 51.3890),
     "dubai": (25.2048, 55.2708),
     "tel aviv": (32.0853, 34.7818),
@@ -279,34 +272,39 @@ LOCATION_COORDS = {
     "copenhagen": (55.6761, 12.5683),
     "vienna": (48.2082, 16.3738),
     "prague": (50.0755, 14.4378),
-    "budapest": (47.4979, 19.0402),
     "dublin": (53.3498, -6.2603),
-    "belfast": (54.5973, -5.9301),
-    "glasgow": (55.8642, -4.2518),
-    "edinburgh": (55.9533, -3.1883),
 }
 
 REGION_LOOKUP = {
-    "europe": ["london","paris","berlin","rome","madrid","brussels","amsterdam","moscow","kyiv","istanbul","athens","warsaw","stockholm","helsinki","oslo","copenhagen","vienna","prague","budapest","dublin","belfast","glasgow","edinburgh"],
-    "north america": ["new york","washington","los angeles","san francisco","chicago","mexico city"],
-    "asia-pacific": ["beijing","shanghai","tokyo","seoul","taipei","hong kong","singapore","sydney","melbourne","canberra","bali","jakarta","manila","bangkok","delhi","mumbai"],
-    "middle east": ["tehran","dubai","tel aviv","gaza","jerusalem"],
-    "africa": ["cairo","nairobi","lagos","cape town","johannesburg"],
-    "latin america": ["sao paulo","rio de janeiro","buenos aires"],
+    "Europe": [
+        "london", "paris", "berlin", "rome", "madrid", "amsterdam", "brussels",
+        "kyiv", "moscow", "istanbul", "athens", "warsaw", "stockholm", "helsinki",
+        "oslo", "copenhagen", "vienna", "prague", "dublin"
+    ],
+    "North America": [
+        "new york", "washington", "los angeles", "san francisco", "chicago", "mexico city"
+    ],
+    "Asia-Pacific": [
+        "beijing", "shanghai", "tokyo", "seoul", "taipei", "hong kong", "singapore",
+        "sydney", "melbourne", "jakarta", "bali", "manila", "bangkok", "delhi", "mumbai"
+    ],
+    "Middle East": ["tehran", "dubai", "tel aviv", "gaza", "jerusalem"],
+    "Africa": ["cairo", "nairobi", "lagos", "cape town", "johannesburg"],
+    "Latin America": ["sao paulo", "rio de janeiro", "buenos aires"],
 }
 
 THREAT_PATTERNS = {
-    "Cyberattack": ["cyber", "breach", "ransomware", "phishing", "malware", "ddos", "exploit", "zero-day", "hacker", "data leak", "data breach"],
+    "Cyberattack": ["cyber", "breach", "ransomware", "phishing", "malware", "ddos", "exploit", "zero-day", "hacker"],
     "Civil Unrest": ["protest", "riot", "unrest", "clashes", "demonstration", "strike", "march"],
-    "Conflict": ["missile", "drone", "shelling", "airstrike", "troops", "conflict", "military", "offensive", "attack"],
+    "Conflict": ["missile", "drone", "shelling", "airstrike", "troops", "conflict", "military", "offensive"],
     "Terror / Violent Incident": ["terror", "bomb", "shooting", "explosion", "hostage", "knife attack"],
-    "Infrastructure / Disruption": ["outage", "blackout", "airport", "rail", "transport", "disruption", "shutdown", "port"],
+    "Infrastructure / Disruption": ["outage", "blackout", "airport", "rail", "transport", "shutdown", "port"],
     "Fraud / Financial Crime": ["fraud", "scam", "money laundering", "sanctions", "illicit finance"],
 }
 
 SECTOR_PATTERNS = {
-    "Finance": ["bank", "banking", "financial", "payment", "fintech", "stock exchange"],
-    "Government": ["government", "ministry", "parliament", "embassy", "federal", "state department"],
+    "Finance": ["bank", "banking", "financial", "payment", "fintech", "exchange"],
+    "Government": ["government", "ministry", "parliament", "embassy", "federal"],
     "Technology": ["tech", "software", "cloud", "platform", "app", "provider", "data centre"],
     "Transport": ["airport", "rail", "metro", "flight", "airline", "shipping", "port", "train"],
     "Healthcare": ["hospital", "clinic", "health", "pharma", "medical"],
@@ -316,89 +314,56 @@ SECTOR_PATTERNS = {
 }
 
 MITRE_RULES = [
-    ("Phishing", "T1566", ["phishing", "credential harvesting", "malicious email"]),
-    ("Valid Accounts", "T1078", ["stolen credentials", "compromised account", "account takeover"]),
-    ("Exploit Public-Facing Application", "T1190", ["exploit", "zero-day", "public-facing", "vulnerability"]),
-    ("Data Encrypted for Impact", "T1486", ["ransomware", "encrypted systems"]),
-    ("Network Denial of Service", "T1498", ["ddos", "traffic flood", "service disruption"]),
-    ("Exfiltration Over Web Service", "T1567", ["data leak", "data breach", "exfiltration"]),
+    ("T1566", "Phishing", ["phishing", "malicious email", "credential harvesting"]),
+    ("T1078", "Valid Accounts", ["stolen credentials", "compromised account", "account takeover"]),
+    ("T1190", "Exploit Public-Facing Application", ["exploit", "zero-day", "public-facing", "vulnerability"]),
+    ("T1486", "Data Encrypted for Impact", ["ransomware", "encrypted systems"]),
+    ("T1498", "Network Denial of Service", ["ddos", "traffic flood", "service disruption"]),
+    ("T1567", "Exfiltration Over Web Service", ["data leak", "data breach", "exfiltration"]),
 ]
-
-ACTOR_LIBRARY = {
-    "ransomware": {
-        "actor": "Ransomware Operators",
-        "motivation": "Financial gain",
-        "capability": "High",
-        "typical_ttp": "Initial access via phishing, exposed services, or stolen credentials followed by encryption and extortion."
-    },
-    "phishing": {
-        "actor": "Credential Theft Cluster",
-        "motivation": "Account compromise and follow-on intrusion",
-        "capability": "Medium",
-        "typical_ttp": "Deceptive lures, fake login pages, and session theft against corporate users."
-    },
-    "state": {
-        "actor": "State-Aligned Threat Actor",
-        "motivation": "Espionage, disruption, influence",
-        "capability": "High",
-        "typical_ttp": "Longer-term access, targeting critical infrastructure, government, telecoms, and strategic sectors."
-    },
-    "protest": {
-        "actor": "Unstructured Demonstration Network",
-        "motivation": "Political or social grievance mobilisation",
-        "capability": "Low to Medium",
-        "typical_ttp": "Crowd mobilisation, transport disruption, opportunistic escalation, heavy online amplification."
-    },
-    "conflict": {
-        "actor": "Conventional / Hybrid Conflict Actor",
-        "motivation": "Territorial, military, or political objectives",
-        "capability": "High",
-        "typical_ttp": "Kinetic strikes, infrastructure pressure, information operations, and asymmetric escalation."
-    },
-}
 
 SIMULATED_INCIDENTS = [
     {
         "title": "Phishing campaign targets European financial institutions",
-        "description": "Security teams identified a phishing operation targeting banking users in London and Paris with credential harvesting lures.",
-        "source": "Simulation Desk",
+        "description": "Credential harvesting lures reported against banking users in London and Paris, with suspicious login infrastructure observed.",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-1",
-        "publishedAt": "2026-04-04T07:20:00Z"
+        "publishedAt": "2026-04-04T07:20:00Z",
     },
     {
         "title": "Civil unrest disrupts metro services in Paris",
         "description": "Transport disruption reported after demonstrations escalated near major transit hubs in Paris.",
-        "source": "Simulation Desk",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-2",
-        "publishedAt": "2026-04-04T09:10:00Z"
+        "publishedAt": "2026-04-04T09:10:00Z",
     },
     {
         "title": "Ransomware incident affects healthcare network in New York",
         "description": "A regional healthcare provider reported encrypted systems and cancelled appointments following a suspected ransomware intrusion.",
-        "source": "Simulation Desk",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-3",
-        "publishedAt": "2026-04-04T05:55:00Z"
+        "publishedAt": "2026-04-04T05:55:00Z",
     },
     {
         "title": "DDoS activity causes outage for cloud platform",
         "description": "Customers reported service instability after heavy malicious traffic impacted a cloud provider serving enterprise applications.",
-        "source": "Simulation Desk",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-4",
-        "publishedAt": "2026-04-04T02:40:00Z"
+        "publishedAt": "2026-04-04T02:40:00Z",
     },
     {
         "title": "Drone strike reported near critical infrastructure in Kyiv",
         "description": "Authorities reported overnight drone activity affecting power distribution and operational continuity.",
-        "source": "Simulation Desk",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-5",
-        "publishedAt": "2026-04-04T01:05:00Z"
+        "publishedAt": "2026-04-04T01:05:00Z",
     },
     {
         "title": "Suspicious financial crime probe expands in Dubai",
         "description": "Investigators are reviewing possible money laundering exposure linked to shell entities and regional transaction flows.",
-        "source": "Simulation Desk",
+        "source": {"name": "Simulation Desk"},
         "url": "https://example.com/sim-6",
-        "publishedAt": "2026-04-03T22:25:00Z"
+        "publishedAt": "2026-04-03T22:25:00Z",
     },
 ]
 
@@ -411,31 +376,12 @@ def get_newsapi_key():
     except Exception:
         return None
 
+
 def clean_text(value):
     if pd.isna(value):
         return ""
     return html.unescape(str(value)).strip()
 
-def infer_threat_type(text):
-    text_lower = text.lower()
-    for threat, keywords in THREAT_PATTERNS.items():
-        if any(word in text_lower for word in keywords):
-            return threat
-    return "General Security"
-
-def infer_sector(text):
-    text_lower = text.lower()
-    for sector, keywords in SECTOR_PATTERNS.items():
-        if any(word in text_lower for word in keywords):
-            return sector
-    return "General"
-
-def infer_region(location):
-    location_lower = location.lower()
-    for region, locations in REGION_LOOKUP.items():
-        if location_lower in locations:
-            return region.title()
-    return "Global"
 
 def extract_location(text):
     text_lower = text.lower()
@@ -444,56 +390,54 @@ def extract_location(text):
             return location.title()
     return "Unknown"
 
+
 def location_to_coords(location):
     coords = LOCATION_COORDS.get(location.lower())
-    if coords:
-        return coords
-    return (20.0, 0.0)
+    return coords if coords else (20.0, 0.0)
 
-def map_to_mitre(text):
-    text_lower = text.lower()
-    hits = []
-    for name, technique, keywords in MITRE_RULES:
-        if any(k in text_lower for k in keywords):
-            hits.append(f"{technique} • {name}")
-    return hits if hits else ["T1595 • Active Scanning / Unspecified"]
 
-def generate_actor_profile(text):
+def infer_region(location):
+    location_lower = location.lower()
+    for region, places in REGION_LOOKUP.items():
+        if location_lower in places:
+            return region
+    return "Global"
+
+
+def infer_threat_type(text):
     text_lower = text.lower()
-    if "ransomware" in text_lower:
-        return ACTOR_LIBRARY["ransomware"]
-    if "phishing" in text_lower or "credential" in text_lower:
-        return ACTOR_LIBRARY["phishing"]
-    if any(word in text_lower for word in ["government", "military", "critical infrastructure", "state", "espionage"]):
-        return ACTOR_LIBRARY["state"]
-    if any(word in text_lower for word in ["protest", "riot", "demonstration", "unrest"]):
-        return ACTOR_LIBRARY["protest"]
-    if any(word in text_lower for word in ["drone", "missile", "airstrike", "troops", "shelling", "conflict"]):
-        return ACTOR_LIBRARY["conflict"]
-    return {
-        "actor": "Emergent / Unspecified Threat Cluster",
-        "motivation": "Mixed or unclear",
-        "capability": "Medium",
-        "typical_ttp": "Limited information available. Monitoring recommended for escalation indicators and repeated patterns."
-    }
+    for threat, keywords in THREAT_PATTERNS.items():
+        if any(word in text_lower for word in keywords):
+            return threat
+    return "General Security"
+
+
+def infer_sector(text):
+    text_lower = text.lower()
+    for sector, keywords in SECTOR_PATTERNS.items():
+        if any(word in text_lower for word in keywords):
+            return sector
+    return "General"
+
 
 def severity_score(text):
     text_lower = text.lower()
     score = 20
 
     high_terms = [
-        "ransomware", "explosion", "terror", "missile", "drone strike", "breach",
-        "data breach", "hospital", "critical infrastructure", "airstrike", "shooting",
-        "hostage", "outage", "blackout", "ddos", "zero-day"
+        "ransomware", "explosion", "terror", "missile", "drone strike",
+        "breach", "data breach", "hospital", "critical infrastructure",
+        "airstrike", "shooting", "hostage", "outage", "blackout", "ddos", "zero-day"
     ]
     medium_terms = [
-        "phishing", "fraud", "protest", "unrest", "clashes", "investigation",
-        "suspicious", "disruption", "shutdown", "sanctions"
+        "phishing", "fraud", "protest", "unrest", "clashes",
+        "investigation", "suspicious", "disruption", "shutdown", "sanctions"
     ]
 
     for term in high_terms:
         if term in text_lower:
             score += 18
+
     for term in medium_terms:
         if term in text_lower:
             score += 9
@@ -501,10 +445,11 @@ def severity_score(text):
     if any(word in text_lower for word in ["government", "bank", "airport", "rail", "hospital", "energy", "power", "cloud"]):
         score += 12
 
-    if any(word in text_lower for word in ["multiple", "widespread", "regional", "national", "global"]):
+    if any(word in text_lower for word in ["multiple", "regional", "national", "global", "widespread"]):
         score += 8
 
     return min(score, 100)
+
 
 def severity_label(score):
     if score >= 70:
@@ -513,9 +458,58 @@ def severity_label(score):
         return "Medium"
     return "Low"
 
+
+def map_to_mitre(text):
+    text_lower = text.lower()
+    hits = []
+    for technique, name, keywords in MITRE_RULES:
+        if any(k in text_lower for k in keywords):
+            hits.append(f"{technique} • {name}")
+    return hits if hits else ["T1595 • Active Scanning / Unspecified"]
+
+
+def generate_actor_profile(text):
+    text_lower = text.lower()
+
+    if "ransomware" in text_lower:
+        return {
+            "actor": "Ransomware Operators",
+            "motivation": "Financial gain",
+            "capability": "High",
+            "ttp": "Initial access via phishing, exposed services, or stolen credentials followed by encryption and extortion.",
+        }
+    if "phishing" in text_lower or "credential" in text_lower:
+        return {
+            "actor": "Credential Theft Cluster",
+            "motivation": "Account compromise and follow-on intrusion",
+            "capability": "Medium",
+            "ttp": "Deceptive lures, fake login pages, and session theft against enterprise users.",
+        }
+    if any(word in text_lower for word in ["protest", "riot", "demonstration", "unrest"]):
+        return {
+            "actor": "Unstructured Demonstration Network",
+            "motivation": "Political or social mobilisation",
+            "capability": "Low to Medium",
+            "ttp": "Crowd mobilisation, transport disruption, opportunistic escalation, and rapid online amplification.",
+        }
+    if any(word in text_lower for word in ["drone", "missile", "airstrike", "troops", "shelling", "conflict"]):
+        return {
+            "actor": "Hybrid Conflict Actor",
+            "motivation": "Territorial, military, or political objectives",
+            "capability": "High",
+            "ttp": "Kinetic strikes, infrastructure pressure, information operations, and asymmetric escalation.",
+        }
+    return {
+        "actor": "Emergent / Unspecified Threat Cluster",
+        "motivation": "Mixed or unclear",
+        "capability": "Medium",
+        "ttp": "Limited information available. Monitoring recommended for repeat patterns and escalation indicators.",
+    }
+
+
 def generate_detection_summary(row):
     threat = row["threat_type"]
-    title = row["title"]
+
     if threat == "Cyberattack":
         return "Suspicious intrusion activity consistent with credential theft, ransomware, or exploitation workflow."
     if threat == "Civil Unrest":
@@ -526,85 +520,71 @@ def generate_detection_summary(row):
         return "Operational continuity affected by service outage or infrastructure pressure requiring contingency tracking."
     if threat == "Fraud / Financial Crime":
         return "Potential regulatory, transactional, or illicit finance exposure requiring enhanced due diligence."
-    return f"Monitor evolving threat indicators and validate operational impact for: {title}"
+    return "Monitor evolving threat indicators and validate operational impact."
+
 
 def simulated_log_lines(row):
-    base_time = row["published_dt"]
-    if pd.isna(base_time):
-        base_time = datetime.now(timezone.utc)
-    times = [
-        base_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        (base_time).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        (base_time).strftime("%Y-%m-%d %H:%M:%S UTC"),
-    ]
+    ts = row["published_dt"]
+    if pd.isna(ts):
+        ts = datetime.now(timezone.utc)
+
+    ts_str = ts.strftime("%Y-%m-%d %H:%M:%S UTC")
+    mitre_first = row["mitre_tags"][0] if row["mitre_tags"] else "Unmapped"
+
     return [
-        f"{times[0]} | OSINT_FEED | INGEST | source={row['source']} | title=\"{row['title'][:90]}\"",
-        f"{times[1]} | TRIAGE_ENGINE | SCORE={row['severity_score']} | threat_type={row['threat_type']} | sector={row['sector']}",
-        f"{times[2]} | ANALYST_QUEUE | priority={row['queue_priority']} | mitre={', '.join(row['mitre_tags'])}",
+        f"{ts_str} | OSINT_FEED | INGEST | source={row['source']} | title=\"{row['title'][:90]}\"",
+        f"{ts_str} | TRIAGE_ENGINE | SCORE={row['severity_score']} | threat_type={row['threat_type']} | sector={row['sector']}",
+        f"{ts_str} | ANALYST_QUEUE | priority={row['queue_priority']} | mitre={mitre_first}",
     ]
+
 
 def build_brief(df):
     now_str = datetime.now().strftime("%d %b %Y, %H:%M")
-    high_df = df[df["severity"] == "High"].head(5)
-    top_regions = df["region"].value_counts().head(3)
-    top_sectors = df["sector"].value_counts().head(3)
+    lines = [
+        "GLOBAL THREAT INTELLIGENCE BRIEF",
+        f"Generated: {now_str}",
+        "",
+        "EXECUTIVE SUMMARY",
+        f"- Total incidents tracked: {len(df)}",
+        f"- High severity incidents: {int((df['severity'] == 'High').sum())}",
+        f"- Most frequent threat type: {df['threat_type'].mode().iloc[0] if not df.empty else 'N/A'}",
+        "",
+        "KEY DEVELOPMENTS",
+    ]
 
-    lines = []
-    lines.append("GLOBAL THREAT INTELLIGENCE BRIEF")
-    lines.append(f"Generated: {now_str}")
-    lines.append("")
-    lines.append("EXECUTIVE SUMMARY")
-    lines.append(f"- Total incidents tracked: {len(df)}")
-    lines.append(f"- High severity incidents: {int((df['severity'] == 'High').sum())}")
-    lines.append(f"- Most frequent threat type: {df['threat_type'].mode().iloc[0] if not df.empty else 'N/A'}")
-    lines.append("")
+    top_items = df[df["severity"] == "High"].head(5)
+    if top_items.empty:
+        top_items = df.head(5)
 
-    lines.append("KEY DEVELOPMENTS")
-    if high_df.empty:
-        for _, row in df.head(3).iterrows():
-            lines.append(f"- [{row['severity']}] {row['title']} ({row['location']}, {row['source']})")
-    else:
-        for _, row in high_df.iterrows():
-            lines.append(f"- [{row['severity']}] {row['title']} ({row['location']}, {row['source']})")
+    for _, row in top_items.iterrows():
+        lines.append(f"- [{row['severity']}] {row['title']} ({row['location']}, {row['source']})")
 
-    lines.append("")
-    lines.append("REGIONAL SNAPSHOT")
-    for region, count in top_regions.items():
-        lines.append(f"- {region}: {count} incident(s)")
+    lines.extend([
+        "",
+        "ANALYST JUDGEMENT",
+        "The current operating picture indicates a mixed environment spanning cyber intrusion, infrastructure disruption, and public disorder risk. Priority monitoring should focus on incidents affecting critical services, finance, healthcare, transport, and government-linked operations.",
+        "",
+        "RECOMMENDED ACTIONS",
+        "- Prioritise high-severity incidents for immediate validation and impact assessment.",
+        "- Review credential abuse, phishing, ransomware, and service outage indicators across relevant environments.",
+        "- Monitor transport, venue, and staff safety implications where civil unrest or conflict indicators are present.",
+        "- Maintain executive situational awareness with recurring brief updates.",
+    ])
 
-    lines.append("")
-    lines.append("SECTOR EXPOSURE")
-    for sector, count in top_sectors.items():
-        lines.append(f"- {sector}: {count} incident(s)")
-
-    lines.append("")
-    lines.append("ANALYST JUDGEMENT")
-    lines.append("The current picture indicates a mixed threat environment spanning cyber intrusion, infrastructure disruption, and public disorder risks. Priority monitoring should focus on incidents affecting critical services, finance, healthcare, transport, and government-linked operations. Escalation risk increases where cyber and physical disruption indicators overlap.")
-
-    lines.append("")
-    lines.append("RECOMMENDED ACTIONS")
-    lines.append("- Prioritise high-severity incidents for immediate validation and impact assessment.")
-    lines.append("- Review credential abuse, phishing, ransomware, and service outage indicators across relevant environments.")
-    lines.append("- Monitor transport, venue, and staff safety implications where civil unrest or conflict indicators are present.")
-    lines.append("- Maintain executive situational awareness with regular update cycles.")
     return "\n".join(lines)
 
+
+def render_brief_panel(text):
+    safe_text = html.escape(text).replace("\n", "<br>")
+    st.markdown(f"<div class='brief-panel'>{safe_text}</div>", unsafe_allow_html=True)
+
+
 def convert_df_to_csv(df):
-    return df.to_csv(index=False).encode("utf-8")
+    export_df = df.copy()
+    if "published_dt" in export_df.columns:
+        export_df["published_dt"] = export_df["published_dt"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    return export_df.to_csv(index=False).encode("utf-8")
 
-def to_display_df(df):
-    display_cols = [
-        "published_dt", "title", "source", "location", "region",
-        "threat_type", "sector", "severity", "severity_score", "queue_priority"
-    ]
-    out = df[display_cols].copy()
-    out["published_dt"] = out["published_dt"].dt.strftime("%Y-%m-%d %H:%M")
-    return out
-
-# =========================================================
-# DATA INGESTION
-# =========================================================
-NEWSAPI_KEY = get_newsapi_key()
 
 @st.cache_data(ttl=900, show_spinner=False)
 def fetch_news_live(api_key, query, page_size=40):
@@ -628,8 +608,10 @@ def fetch_news_live(api_key, query, page_size=40):
     except Exception:
         return []
 
+
 def build_dataframe(articles):
-    records = []
+    rows = []
+
     for article in articles:
         title = clean_text(article.get("title", "Untitled"))
         description = clean_text(article.get("description", ""))
@@ -637,23 +619,21 @@ def build_dataframe(articles):
         url = clean_text(article.get("url", ""))
         published = clean_text(article.get("publishedAt", ""))
 
-        full_text = f"{title}. {description}".strip()
-        location = extract_location(full_text)
+        combined_text = f"{title}. {description}".strip()
+        location = extract_location(combined_text)
         lat, lon = location_to_coords(location)
-        score = severity_score(full_text)
-        sev = severity_label(score)
-        threat_type = infer_threat_type(full_text)
-        sector = infer_sector(full_text)
-        region = infer_region(location)
-        mitre_tags = map_to_mitre(full_text)
-        actor = generate_actor_profile(full_text)
+        threat_type = infer_threat_type(combined_text)
+        sector = infer_sector(combined_text)
+        score = severity_score(combined_text)
+        severity = severity_label(score)
+        mitre_tags = map_to_mitre(combined_text)
+        actor = generate_actor_profile(combined_text)
 
-        try:
-            published_dt = pd.to_datetime(published, errors="coerce", utc=True)
-        except Exception:
-            published_dt = pd.NaT
+        published_dt = pd.to_datetime(published, errors="coerce", utc=True)
+        if pd.isna(published_dt):
+            published_dt = pd.Timestamp.now(tz="UTC")
 
-        records.append({
+        rows.append({
             "title": title,
             "description": description,
             "source": source,
@@ -663,57 +643,54 @@ def build_dataframe(articles):
             "location": location,
             "lat": lat,
             "lon": lon,
-            "severity_score": score,
-            "severity": sev,
+            "region": infer_region(location),
             "threat_type": threat_type,
             "sector": sector,
-            "region": region,
+            "severity_score": score,
+            "severity": severity,
             "mitre_tags": mitre_tags,
             "actor_name": actor["actor"],
             "actor_motivation": actor["motivation"],
             "actor_capability": actor["capability"],
-            "actor_ttp": actor["typical_ttp"],
+            "actor_ttp": actor["ttp"],
         })
 
-    df = pd.DataFrame(records)
+    df = pd.DataFrame(rows)
 
     if df.empty:
         return df
 
-    df["published_dt"] = pd.to_datetime(df["published_dt"], errors="coerce", utc=True)
-    df["published_dt"] = df["published_dt"].fillna(pd.Timestamp.now(tz="UTC"))
+    df = df.sort_values("published_dt", ascending=False).reset_index(drop=True)
     df["hour_bucket"] = df["published_dt"].dt.floor("h")
     df["queue_priority"] = df["severity_score"].rank(method="dense", ascending=False).astype(int)
     df["detection_summary"] = df.apply(generate_detection_summary, axis=1)
-    return df.sort_values("published_dt", ascending=False).reset_index(drop=True)
+    return df
+
 
 # =========================================================
-# SIDEBAR CONTROLS
+# SIDEBAR
 # =========================================================
 st.sidebar.markdown("## Control Centre")
+
 query = st.sidebar.text_input(
     "Threat query",
-    value='cyber OR ransomware OR phishing OR protest OR conflict OR explosion OR outage OR breach'
+    value="cyber OR ransomware OR phishing OR protest OR conflict OR explosion OR outage OR breach",
 )
 
 max_articles = st.sidebar.slider("Max articles", 10, 80, 35, 5)
-use_live = st.sidebar.toggle("Use live NewsAPI feed", value=True)
-show_simulated_if_empty = st.sidebar.toggle("Use fallback simulation if live feed is empty", value=True)
+use_live_feed = st.sidebar.toggle("Use live NewsAPI feed", value=True)
+use_simulated_fallback = st.sidebar.toggle("Fallback to simulation if feed is empty", value=True)
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Filters")
+NEWSAPI_KEY = get_newsapi_key()
 
-# =========================================================
-# LOAD DATA
-# =========================================================
 articles = []
 data_mode = "Simulation"
 
-if use_live:
+if use_live_feed:
     articles = fetch_news_live(NEWSAPI_KEY, query, page_size=max_articles)
     if articles:
         data_mode = "Live NewsAPI"
-    elif show_simulated_if_empty:
+    elif use_simulated_fallback:
         articles = SIMULATED_INCIDENTS
         data_mode = "Simulation Fallback"
     else:
@@ -726,14 +703,20 @@ else:
 df = build_dataframe(articles)
 
 if df.empty:
-    st.markdown('<div class="dashboard-title">Global Threat Monitoring Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dashboard-subtitle">No data available. Add a valid NewsAPI key in Streamlit secrets as <code>NEWSAPI_KEY</code> or enable fallback simulation.</div>', unsafe_allow_html=True)
+    st.markdown("<div class='dashboard-title'>Global Threat Monitoring Dashboard</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='dashboard-subtitle'>No data available. Add <code>NEWSAPI_KEY</code> to your Streamlit secrets or enable simulation fallback.</div>",
+        unsafe_allow_html=True,
+    )
     st.stop()
 
-severity_options = sorted(df["severity"].dropna().unique().tolist(), key=lambda x: ["High", "Medium", "Low"].index(x) if x in ["High", "Medium", "Low"] else 99)
+severity_options = ["High", "Medium", "Low"]
 region_options = sorted(df["region"].dropna().unique().tolist())
 threat_options = sorted(df["threat_type"].dropna().unique().tolist())
 sector_options = sorted(df["sector"].dropna().unique().tolist())
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Filters")
 
 selected_severity = st.sidebar.multiselect("Severity", severity_options, default=severity_options)
 selected_region = st.sidebar.multiselect("Region", region_options, default=region_options)
@@ -742,18 +725,18 @@ selected_sector = st.sidebar.multiselect("Sector", sector_options, default=secto
 keyword_filter = st.sidebar.text_input("Keyword filter", value="")
 
 filtered_df = df[
-    df["severity"].isin(selected_severity) &
-    df["region"].isin(selected_region) &
-    df["threat_type"].isin(selected_threat) &
-    df["sector"].isin(selected_sector)
+    df["severity"].isin(selected_severity)
+    & df["region"].isin(selected_region)
+    & df["threat_type"].isin(selected_threat)
+    & df["sector"].isin(selected_sector)
 ].copy()
 
 if keyword_filter.strip():
-    pattern = keyword_filter.strip().lower()
+    term = keyword_filter.strip().lower()
     filtered_df = filtered_df[
-        filtered_df["title"].str.lower().str.contains(pattern, na=False) |
-        filtered_df["description"].str.lower().str.contains(pattern, na=False) |
-        filtered_df["location"].str.lower().str.contains(pattern, na=False)
+        filtered_df["title"].str.lower().str.contains(term, na=False)
+        | filtered_df["description"].str.lower().str.contains(term, na=False)
+        | filtered_df["location"].str.lower().str.contains(term, na=False)
     ].copy()
 
 filtered_df = filtered_df.sort_values(["severity_score", "published_dt"], ascending=[False, False]).reset_index(drop=True)
@@ -761,82 +744,93 @@ filtered_df = filtered_df.sort_values(["severity_score", "published_dt"], ascend
 # =========================================================
 # HEADER
 # =========================================================
-st.markdown('<div class="dashboard-title">Global Threat Monitoring Dashboard</div>', unsafe_allow_html=True)
+st.markdown("<div class='dashboard-title'>Global Threat Monitoring Dashboard</div>", unsafe_allow_html=True)
 st.markdown(
-    f'<div class="dashboard-subtitle">Executive-grade OSINT monitoring with live triage, drill-down analysis, MITRE-style mapping, and intelligence brief generation. <b>Mode:</b> {data_mode}</div>',
-    unsafe_allow_html=True
+    f"<div class='dashboard-subtitle'>Executive-grade OSINT monitoring with live triage, drill-down analysis, simulated SOC workflow, and exportable intelligence brief. <b>Mode:</b> {data_mode}</div>",
+    unsafe_allow_html=True,
 )
 
 # =========================================================
-# KPI ROW
+# KPI CARDS
 # =========================================================
 total_incidents = len(filtered_df)
 high_count = int((filtered_df["severity"] == "High").sum())
 avg_score = round(filtered_df["severity_score"].mean(), 1) if not filtered_df.empty else 0
 top_region = filtered_df["region"].mode().iloc[0] if not filtered_df.empty else "N/A"
 
-k1, k2, k3, k4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
-with k1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Tracked Incidents</div>
-        <div class="metric-value">{total_incidents}</div>
-        <div class="metric-sub">Post-filter incident count</div>
-    </div>
-    """, unsafe_allow_html=True)
+with c1:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Tracked Incidents</div>
+            <div class="metric-value">{total_incidents}</div>
+            <div class="metric-sub">Post-filter incident count</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-with k2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">High Severity</div>
-        <div class="metric-value">{high_count}</div>
-        <div class="metric-sub">Immediate analyst attention</div>
-    </div>
-    """, unsafe_allow_html=True)
+with c2:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">High Severity</div>
+            <div class="metric-value">{high_count}</div>
+            <div class="metric-sub">Immediate analyst attention</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-with k3:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Average Risk Score</div>
-        <div class="metric-value">{avg_score}</div>
-        <div class="metric-sub">Composite severity estimate</div>
-    </div>
-    """, unsafe_allow_html=True)
+with c3:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Average Risk Score</div>
+            <div class="metric-value">{avg_score}</div>
+            <div class="metric-sub">Composite severity estimate</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-with k4:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Top Region</div>
-        <div class="metric-value" style="font-size:1.6rem;">{top_region}</div>
-        <div class="metric-sub">Most represented operating area</div>
-    </div>
-    """, unsafe_allow_html=True)
+with c4:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Top Region</div>
+            <div class="metric-value" style="font-size:1.5rem;">{top_region}</div>
+            <div class="metric-sub">Most active operating area</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.markdown("")
 
 # =========================================================
-# MAIN TABS
+# TABS
 # =========================================================
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Overview",
-    "Alert Triage",
-    "Incident Drill-Down",
-    "Detections + MITRE",
-    "Exports",
-])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Overview", "Alert Triage", "Incident Drill-Down", "Detections + MITRE", "Exports"]
+)
 
 # =========================================================
-# TAB 1 OVERVIEW
+# TAB 1 - OVERVIEW
 # =========================================================
 with tab1:
     left, right = st.columns([1.45, 1])
 
     with left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Threat Activity Timeline")
-        timeline_df = filtered_df.copy()
-        timeline_counts = timeline_df.groupby("hour_bucket").size().reset_index(name="incident_count")
+
+        timeline_counts = (
+            filtered_df.groupby("hour_bucket").size().reset_index(name="incident_count")
+            if not filtered_df.empty else pd.DataFrame(columns=["hour_bucket", "incident_count"])
+        )
 
         if not timeline_counts.empty:
             fig_timeline = px.line(
@@ -849,7 +843,7 @@ with tab1:
             fig_timeline.update_layout(
                 template="plotly_dark",
                 height=360,
-                margin=dict(l=20, r=20, t=20, b=20),
+                margin=dict(l=20, r=20, t=10, b=20),
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis_title="Time",
@@ -858,11 +852,13 @@ with tab1:
             st.plotly_chart(fig_timeline, use_container_width=True)
         else:
             st.info("No timeline data available for the current filters.")
-        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Global Incident Map")
+
         base_map = folium.Map(location=[20, 0], zoom_start=2, tiles="CartoDB dark_matter")
         cluster = MarkerCluster().add_to(base_map)
 
@@ -878,21 +874,23 @@ with tab1:
             </div>
             """
             color = "red" if row["severity"] == "High" else "orange" if row["severity"] == "Medium" else "green"
+
             folium.CircleMarker(
                 location=[row["lat"], row["lon"]],
                 radius=7,
                 popup=folium.Popup(popup_html, max_width=350),
                 color=color,
                 fill=True,
-                fill_opacity=0.8,
+                fill_opacity=0.85,
             ).add_to(cluster)
 
         st_folium(base_map, width=None, height=500, returned_objects=[])
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Threat Type Breakdown")
+
         threat_counts = filtered_df["threat_type"].value_counts().reset_index()
         threat_counts.columns = ["threat_type", "count"]
 
@@ -909,14 +907,15 @@ with tab1:
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             xaxis_title="Count",
-            yaxis_title=""
+            yaxis_title="",
         )
         st.plotly_chart(fig_threat, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Sector Exposure")
+
         sector_counts = filtered_df["sector"].value_counts().reset_index()
         sector_counts.columns = ["sector", "count"]
 
@@ -933,116 +932,124 @@ with tab1:
             paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_sector, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Executive Snapshot")
-        st.markdown(f"""
-        <div class="small-muted">
-        <b>Operational picture:</b> {filtered_df['threat_type'].mode().iloc[0] if not filtered_df.empty else 'N/A'} is currently the most visible threat pattern.<br><br>
-        <b>Priority region:</b> {top_region}<br><br>
-        <b>Analyst note:</b> High-severity items should be validated first where transport, healthcare, finance, cloud platforms, or government-linked services are involved.
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        dominant_threat = filtered_df["threat_type"].mode().iloc[0] if not filtered_df.empty else "N/A"
+        st.markdown(
+            f"""
+            <div class="small-muted">
+                <b>Dominant threat pattern:</b> {html.escape(dominant_threat)}<br><br>
+                <b>Priority region:</b> {html.escape(top_region)}<br><br>
+                <b>Analyst note:</b> Validate high-severity items first where transport, healthcare, finance, cloud infrastructure, or government-linked services are involved.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# TAB 2 TRIAGE
+# TAB 2 - TRIAGE
 # =========================================================
 with tab2:
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.subheader("Auto-Prioritised Alert Queue")
-    st.caption("Sorted by severity score, then recency.")
+    st.caption("Sorted by severity score and recency.")
 
-    queue_df = filtered_df.sort_values(["severity_score", "published_dt"], ascending=[False, False]).copy()
-
-    for idx, row in queue_df.head(12).iterrows():
+    for idx, row in filtered_df.head(12).iterrows():
         alert_class = "alert-high" if row["severity"] == "High" else "alert-medium" if row["severity"] == "Medium" else "alert-low"
         badge_class = "badge-high" if row["severity"] == "High" else "badge-medium" if row["severity"] == "Medium" else "badge-low"
-        mitre_short = row["mitre_tags"][0] if isinstance(row["mitre_tags"], list) and row["mitre_tags"] else "Unmapped"
+        mitre_first = row["mitre_tags"][0] if row["mitre_tags"] else "Unmapped"
 
-        st.markdown(f"""
-        <div class="alert-card {alert_class}">
-            <div style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start;">
-                <div style="flex:1;">
-                    <div style="font-size:1.05rem; font-weight:800; color:white;">{html.escape(row["title"])}</div>
-                    <div class="small-muted" style="margin-top:0.35rem;">
-                        {html.escape(row["source"])} • {html.escape(row["location"])} • {row["published_dt"].strftime("%d %b %Y %H:%M UTC")}
+        st.markdown(
+            f"""
+            <div class="alert-card {alert_class}">
+                <div style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start;">
+                    <div style="flex:1;">
+                        <div style="font-size:1.05rem; font-weight:800; color:white;">{html.escape(row["title"])}</div>
+                        <div class="small-muted" style="margin-top:0.35rem;">
+                            {html.escape(row["source"])} • {html.escape(row["location"])} • {row["published_dt"].strftime("%d %b %Y %H:%M UTC")}
+                        </div>
+                        <div style="margin-top:0.45rem;">
+                            <span class="badge {badge_class}">{row["severity"]}</span>
+                            <span class="badge badge-neutral">{html.escape(row["threat_type"])}</span>
+                            <span class="badge badge-neutral">{html.escape(row["sector"])}</span>
+                            <span class="badge badge-neutral">{html.escape(mitre_first)}</span>
+                        </div>
+                        <div class="small-muted" style="margin-top:0.65rem;">
+                            {html.escape(row["detection_summary"])}
+                        </div>
                     </div>
-                    <div style="margin-top:0.45rem;">
-                        <span class="badge {badge_class}">{row["severity"]}</span>
-                        <span class="badge badge-neutral">{html.escape(row["threat_type"])}</span>
-                        <span class="badge badge-neutral">{html.escape(row["sector"])}</span>
-                        <span class="badge badge-neutral">{html.escape(mitre_short)}</span>
+                    <div style="text-align:right; min-width:120px;">
+                        <div class="small-muted">Score</div>
+                        <div style="font-size:1.7rem; font-weight:800; color:white;">{row["severity_score"]}</div>
+                        <div class="small-muted">Priority #{row["queue_priority"]}</div>
                     </div>
-                    <div class="small-muted" style="margin-top:0.65rem;">
-                        {html.escape(row["detection_summary"])}
-                    </div>
-                </div>
-                <div style="text-align:right; min-width:120px;">
-                    <div class="small-muted">Score</div>
-                    <div style="font-size:1.7rem; font-weight:800; color:white;">{row["severity_score"]}</div>
-                    <div class="small-muted">Priority #{row["queue_priority"]}</div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
 
-        c1, c2, c3 = st.columns([1, 1, 1.2])
-        with c1:
+        b1, b2, b3 = st.columns([1, 1, 1.2])
+        with b1:
             st.button(f"Escalate incident #{idx}", key=f"escalate_{idx}")
-        with c2:
+        with b2:
             st.button(f"Assign to L2 #{idx}", key=f"assign_{idx}")
-        with c3:
+        with b3:
             st.link_button(f"Open source #{idx}", row["url"])
 
-        st.markdown("<hr>", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
+    st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("")
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.subheader("Structured Queue Table")
-    triage_table = queue_df[[
+
+    queue_table = filtered_df[[
         "published_dt", "title", "location", "threat_type", "sector",
         "severity", "severity_score", "queue_priority"
     ]].copy()
-    triage_table["published_dt"] = triage_table["published_dt"].dt.strftime("%Y-%m-%d %H:%M")
-    st.dataframe(triage_table, use_container_width=True, hide_index=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    queue_table["published_dt"] = queue_table["published_dt"].dt.strftime("%Y-%m-%d %H:%M")
+    st.dataframe(queue_table, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# TAB 3 DRILL DOWN
+# TAB 3 - DRILL DOWN
 # =========================================================
 with tab3:
     if filtered_df.empty:
         st.info("No incidents available for drill-down.")
     else:
-        incident_options = [
-            f"{i+1}. {row['title']}" for i, (_, row) in enumerate(filtered_df.head(50).iterrows())
+        incident_labels = [
+            f"{i + 1}. {row['title']}" for i, (_, row) in enumerate(filtered_df.head(50).iterrows())
         ]
-        selected_label = st.selectbox("Select an incident", incident_options)
+        selected_label = st.selectbox("Select an incident", incident_labels)
         selected_index = int(selected_label.split(".")[0]) - 1
         row = filtered_df.iloc[selected_index]
 
         left, right = st.columns([1.25, 1])
 
         with left:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.markdown("<div class='panel'>", unsafe_allow_html=True)
             st.subheader("Incident Overview")
             st.markdown(f"### {row['title']}")
-            st.markdown(f"""
-            <div class="small-muted">
-                <b>Source:</b> {html.escape(row['source'])}<br>
-                <b>Published:</b> {row['published_dt'].strftime("%d %b %Y %H:%M UTC")}<br>
-                <b>Location:</b> {html.escape(row['location'])}<br>
-                <b>Region:</b> {html.escape(row['region'])}<br>
-                <b>Threat Type:</b> {html.escape(row['threat_type'])}<br>
-                <b>Sector:</b> {html.escape(row['sector'])}<br>
-                <b>Severity:</b> {html.escape(row['severity'])} ({row['severity_score']}/100)
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="small-muted">
+                    <b>Source:</b> {html.escape(row['source'])}<br>
+                    <b>Published:</b> {row['published_dt'].strftime("%d %b %Y %H:%M UTC")}<br>
+                    <b>Location:</b> {html.escape(row['location'])}<br>
+                    <b>Region:</b> {html.escape(row['region'])}<br>
+                    <b>Threat Type:</b> {html.escape(row['threat_type'])}<br>
+                    <b>Sector:</b> {html.escape(row['sector'])}<br>
+                    <b>Severity:</b> {html.escape(row['severity'])} ({row['severity_score']}/100)
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
             st.markdown("#### Description")
             st.write(row["description"] if row["description"] else "No additional description provided.")
@@ -1055,49 +1062,53 @@ with tab3:
                 st.markdown(f"- {tag}")
 
             st.link_button("Open source article", row["url"])
-            st.markdown('</div>', unsafe_allow_html=True)
-
+            st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("")
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+            st.markdown("<div class='panel'>", unsafe_allow_html=True)
             st.subheader("SIEM / SOC Log View")
             for line in simulated_log_lines(row):
                 st.code(line, language="text")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with right:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.markdown("<div class='panel'>", unsafe_allow_html=True)
             st.subheader("Threat Actor Profile")
-            st.markdown(f"""
-            <div class="small-muted">
-                <b>Actor cluster:</b> {html.escape(row['actor_name'])}<br><br>
-                <b>Motivation:</b> {html.escape(row['actor_motivation'])}<br><br>
-                <b>Capability:</b> {html.escape(row['actor_capability'])}<br><br>
-                <b>Typical behaviour:</b> {html.escape(row['actor_ttp'])}
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
+            st.markdown(
+                f"""
+                <div class="small-muted">
+                    <b>Actor cluster:</b> {html.escape(row['actor_name'])}<br><br>
+                    <b>Motivation:</b> {html.escape(row['actor_motivation'])}<br><br>
+                    <b>Capability:</b> {html.escape(row['actor_capability'])}<br><br>
+                    <b>Typical behaviour:</b> {html.escape(row['actor_ttp'])}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("")
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+            st.markdown("<div class='panel'>", unsafe_allow_html=True)
             st.subheader("Single Incident Map")
             incident_map = folium.Map(location=[row["lat"], row["lon"]], zoom_start=4, tiles="CartoDB dark_matter")
             folium.Marker(
                 [row["lat"], row["lon"]],
                 popup=row["title"],
-                tooltip=row["location"]
+                tooltip=row["location"],
             ).add_to(incident_map)
             st_folium(incident_map, width=None, height=360, returned_objects=[])
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# TAB 4 DETECTIONS + MITRE
+# TAB 4 - DETECTIONS + MITRE
 # =========================================================
 with tab4:
     left, right = st.columns([1, 1])
 
     with left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("MITRE Technique Coverage")
+
         mitre_exploded = filtered_df[["mitre_tags"]].explode("mitre_tags")
         mitre_counts = mitre_exploded["mitre_tags"].value_counts().reset_index()
         mitre_counts.columns = ["technique", "count"]
@@ -1120,11 +1131,13 @@ with tab4:
             st.plotly_chart(fig_mitre, use_container_width=True)
         else:
             st.info("No MITRE mappings available.")
-        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Detection Rules Simulation")
+
         detection_rows = []
         for _, row in filtered_df.head(20).iterrows():
             detection_rows.append({
@@ -1132,17 +1145,24 @@ with tab4:
                 "trigger_summary": row["title"][:90],
                 "severity": row["severity"],
                 "mapped_technique": row["mitre_tags"][0] if row["mitre_tags"] else "Unmapped",
-                "recommended_action": "Escalate to L2" if row["severity"] == "High" else "Monitor / validate context"
+                "recommended_action": "Escalate to L2" if row["severity"] == "High" else "Monitor / validate context",
             })
 
         detection_df = pd.DataFrame(detection_rows)
         st.dataframe(detection_df, use_container_width=True, hide_index=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Severity Distribution")
-        sev_counts = filtered_df["severity"].value_counts().reindex(["High", "Medium", "Low"]).fillna(0).reset_index()
+
+        sev_counts = (
+            filtered_df["severity"]
+            .value_counts()
+            .reindex(["High", "Medium", "Low"])
+            .fillna(0)
+            .reset_index()
+        )
         sev_counts.columns = ["severity", "count"]
 
         fig_sev = px.funnel_area(
@@ -1157,32 +1177,35 @@ with tab4:
             paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_sev, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Analyst Recommendations")
-        st.markdown("""
-        <div class="small-muted">
-        <b>For High severity:</b> validate impact immediately, identify affected entities, and determine whether executive escalation is needed.<br><br>
-        <b>For Medium severity:</b> confirm credibility, map likely operational impact, and track for amplification.<br><br>
-        <b>For Low severity:</b> retain for situational awareness and correlation with future reporting.<br><br>
-        <b>Best use in interviews:</b> explain that this dashboard simulates a SOC / intelligence workflow by combining ingestion, classification, prioritisation, drill-down analysis, and executive reporting in one interface.
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="small-muted">
+                <b>For High severity:</b> validate impact immediately, identify affected entities, and determine whether executive escalation is required.<br><br>
+                <b>For Medium severity:</b> confirm credibility, map likely operational impact, and track for amplification.<br><br>
+                <b>For Low severity:</b> retain for situational awareness and future correlation.<br><br>
+                <b>Interview line:</b> this dashboard simulates a modern SOC / intelligence workflow by combining ingestion, classification, prioritisation, drill-down analysis, and executive reporting in one interface.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
-# TAB 5 EXPORTS
+# TAB 5 - EXPORTS
 # =========================================================
 with tab5:
     left, right = st.columns([1, 1])
 
     with left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Generated Intelligence Brief")
         brief_text = build_brief(filtered_df)
-        st.text_area("Brief output", brief_text, height=420)
+        render_brief_panel(brief_text)
 
         st.download_button(
             label="Download intelligence brief (.txt)",
@@ -1190,13 +1213,18 @@ with tab5:
             file_name="global_threat_intelligence_brief.txt",
             mime="text/plain",
         )
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Export Incident Dataset")
-        export_df = to_display_df(filtered_df)
-        st.dataframe(export_df.head(20), use_container_width=True, hide_index=True)
+
+        preview_df = filtered_df[[
+            "published_dt", "title", "source", "location", "region",
+            "threat_type", "sector", "severity", "severity_score", "queue_priority"
+        ]].copy()
+        preview_df["published_dt"] = preview_df["published_dt"].dt.strftime("%Y-%m-%d %H:%M")
+        st.dataframe(preview_df.head(20), use_container_width=True, hide_index=True)
 
         csv_data = convert_df_to_csv(filtered_df)
         st.download_button(
@@ -1205,25 +1233,31 @@ with tab5:
             file_name="filtered_threat_incidents.csv",
             mime="text/csv",
         )
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("Setup Notes")
-        st.code("""# .streamlit/secrets.toml
+
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("Setup")
+        st.code(
+            """# .streamlit/secrets.toml
 NEWSAPI_KEY = "your_key_here"
-""", language="toml")
-        st.markdown("""
-        <div class="small-muted">
-        This app is designed to keep running even if the live API returns no articles. In that case, it automatically falls back to simulation mode if enabled.
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+""",
+            language="toml",
+        )
+        st.markdown(
+            """
+            <div class="small-muted">
+                This app is designed to keep running even if the live feed returns no articles. When enabled, it automatically falls back to simulation mode so the UI never dies during demos.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # FOOTER
 # =========================================================
 st.markdown(
-    '<div class="footer-note">Built for intelligence-style monitoring, triage, and executive briefing workflows. Stable by design, with live-feed support and simulation fallback.</div>',
-    unsafe_allow_html=True
+    "<div class='footer-note'>Built to simulate intelligence monitoring, alert triage, drill-down analysis, and executive briefing workflows in one polished interface.</div>",
+    unsafe_allow_html=True,
 )
