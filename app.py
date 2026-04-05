@@ -705,6 +705,7 @@ def infer_sector(text):
         if any(word in text_lower for word in keywords):
             return sector
     return "General"
+
 def severity_score(text):
     text_lower = safe_lower(text)
 
@@ -937,7 +938,6 @@ def severity_label(score):
         return "Medium"
     else:
         return "Low"
-# CAP EXTREME STACKING
 score = min(score, 95)
 def map_to_mitre(text):
     text_lower = safe_lower(text)
