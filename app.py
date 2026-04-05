@@ -923,7 +923,13 @@ def fetch_news_live(api_key, query, page_size=40):
         return data.get("articles", [])
     except Exception:
         return []
-
+def severity_label(score):
+    if score >= 70:
+        return "High"
+    elif score >= 40:
+        return "Medium"
+    else:
+        return "Low"
 
 def build_dataframe(articles):
     rows = []
