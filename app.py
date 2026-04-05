@@ -1687,28 +1687,7 @@ with tab5:
             mime="text/csv",
         )
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("")
-
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Setup")
-        st.code(
-            '''# .streamlit/secrets.toml
-NEWSAPI_KEY = "your_key_here"
-''',
-            language="toml",
-        )
-        st.markdown(
-            """
-            <div class="small-muted">
-                This app is designed to keep running even if the live feed returns no articles.
-                When enabled, it automatically falls back to simulation mode so the UI still works
-                during demos, portfolio reviews, and recruiter walkthroughs.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-
+   
 # =========================================================
 # FOOTER
 # =========================================================
