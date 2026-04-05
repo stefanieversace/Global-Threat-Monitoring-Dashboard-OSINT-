@@ -8,3 +8,4 @@ pydeck
 numpy
 plotly
 streamlit-folium
+streamlit-autorefresh
