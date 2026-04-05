@@ -931,14 +931,6 @@ def fetch_news_live(api_key, query, page_size=40):
         return data.get("articles", [])
     except Exception:
         return []
-def severity_label(score):
-    if score >= 80:
-        return "High"
-    elif score >= 50:
-        return "Medium"
-    else:
-        return "Low"
-score = min(score, 95)
 def map_to_mitre(text):
     text_lower = safe_lower(text)
     matched = []
