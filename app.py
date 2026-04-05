@@ -619,6 +619,13 @@ SIMULATED_INCIDENTS = [
 # =========================================================
 # HELPERS
 # =========================================================
+def severity_color(severity):
+    if severity == "High":
+        return "#ff6b86"
+    elif severity == "Medium":
+        return "#ffc26b"
+    else:
+        return "#67e6a8"
 # =========================================================
 # INCIDENT STATE TRACKING
 # =========================================================
@@ -924,13 +931,23 @@ def fetch_news_live(api_key, query, page_size=40):
     except Exception:
         return []
 def severity_label(score):
-    if score >= 70:
+    if score >= 80:
         return "High"
-    elif score >= 40:
+    elif score >= 50:
         return "Medium"
     else:
         return "Low"
+# CAP EXTREME STACKING
+score = min(score, 95)
+def map_to_mitre(text):
+    text_lower = safe_lower(text)
+    matched = []
 
+    for technique_id, name, keywords in MITRE_RULES:
+        if any(k in text_lower for k in keywords):
+            matched.append(f"{technique_id} - {name}")
+
+    return matched if matched else ["Unmapped"]
 def build_dataframe(articles):
     rows = []
 
