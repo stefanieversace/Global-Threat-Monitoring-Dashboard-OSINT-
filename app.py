@@ -1366,6 +1366,8 @@ with tab2:
                         </div>
                      incident_id = f"incident_{idx}"
 
+incident_id = f"incident_{idx}"
+
 b1, b2, b3, b4 = st.columns([1, 1, 1, 1.2])
 
 with b1:
@@ -1381,7 +1383,13 @@ with b3:
         set_incident_status(incident_id, "New")
 
 with b4:
-    st.link_button(f"Open source", row["url"])
+    st.link_button("Open source", row["url"])
+
+# ✅ THIS MUST BE INSIDE THE LOOP
+st.markdown(
+    f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
