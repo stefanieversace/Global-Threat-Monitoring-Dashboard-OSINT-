@@ -1216,6 +1216,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 with tab1:
     left, right = st.columns([1.45, 1])
 
+    # ================= LEFT SIDE =================
     with left:
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Threat Activity Timeline")
@@ -1244,18 +1245,23 @@ with tab1:
             )
             st.plotly_chart(fig_timeline, use_container_width=True)
         else:
-            st.info("No timeline data available for the current filters.")
+            st.info("No timeline data available.")
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Global Incident Map")
+
         global_map = build_map(filtered_df, heatmap=show_heatmap)
         st_folium(global_map, width=None, height=530, returned_objects=[])
+
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # ================= RIGHT SIDE =================
     with right:
+
+        # ---- Threat Breakdown ----
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Threat Type Breakdown")
 
@@ -1285,6 +1291,7 @@ with tab1:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
+        # ---- Sector Exposure (FIXED) ----
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Sector Exposure")
 
@@ -1292,65 +1299,50 @@ with tab1:
         sector_counts.columns = ["sector", "count"]
 
         if not sector_counts.empty:
-          fig_sector.update_layout(
-    template="plotly_dark",
-    height=320,
-    margin=dict(l=10, r=10, t=10, b=10),
-    paper_bgcolor="rgba(0,0,0,0)",
+            fig_sector = px.pie(
+                sector_counts,
+                names="sector",
+                values="count",
+                hole=0.55,
+            )
 
-              legend=dict(
-        font=dict(color="white", size=12)
-    ),
-    font=dict(color="white")
-)
-sector_counts = filtered_df["sector"].value_counts().reset_index()
-sector_counts.columns = ["sector", "count"]
+            fig_sector.update_layout(
+                template="plotly_dark",
+                height=320,
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                legend=dict(font=dict(color="white", size=12)),
+                font=dict(color="white"),
+            )
 
-if not sector_counts.empty:
-    fig_sector = px.pie(
-        sector_counts,
-        names="sector",
-        values="count",
-        hole=0.55,
-    )
+            fig_sector.update_traces(
+                textfont=dict(color="white")
+            )
 
-    fig_sector.update_layout(
-        template="plotly_dark",
-        height=320,
-        margin=dict(l=10, r=10, t=10, b=10),
-        paper_bgcolor="rgba(0,0,0,0)",
-        legend=dict(
-            font=dict(color="white", size=12)
-        ),
-        font=dict(color="white")
-    )
+            st.plotly_chart(fig_sector, use_container_width=True)
+        else:
+            st.info("No sector data available.")
 
-    fig_sector.update_traces(
-        textfont=dict(color="white")
-    )
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("")
 
-    st.plotly_chart(fig_sector, use_container_width=True)
+        # ---- Executive Snapshot ----
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("Executive Snapshot")
 
-else:
-    st.info("No sector data available.")            
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("")
-
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.subheader("Executive Snapshot")
-    st.markdown(
+        st.markdown(
             f"""
             <div class="small-muted">
                 <b>Dominant threat pattern:</b> {html.escape(dominant_threat)}<br><br>
                 <b>Priority region:</b> {html.escape(top_region)}<br><br>
-                <b>Analyst note:</b> Validate high-severity items first where transport, healthcare,
-                finance, cloud infrastructure, or government-linked services are involved.
+                <b>Analyst note:</b> Validate high-severity items first where transport,
+                healthcare, finance, cloud infrastructure, or government-linked services are involved.
             </div>
             """,
             unsafe_allow_html=True,
         )
-    st.markdown("</div>", unsafe_allow_html=True)
 
+        st.markdown("</div>", unsafe_allow_html=True)
 # =========================================================
 # TAB 2 - ALERT TRIAGE
 # =========================================================
