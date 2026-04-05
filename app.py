@@ -1508,12 +1508,18 @@ with tab3:
 with tab4:
     left, right = st.columns([1, 1])
 
+    # ================= LEFT =================
     with left:
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("MITRE Technique Coverage")
 
-        mitre_exploded = filtered_df[["mitre_tags"]].explode("mitre_tags") if not filtered_df.empty else pd.DataFrame(columns=["mitre_tags"])
+        mitre_exploded = (
+            filtered_df[["mitre_tags"]].explode("mitre_tags")
+            if not filtered_df.empty else pd.DataFrame(columns=["mitre_tags"])
+        )
+
         mitre_counts = mitre_exploded["mitre_tags"].value_counts().reset_index()
+
         if not mitre_counts.empty:
             mitre_counts.columns = ["technique", "count"]
 
@@ -1522,6 +1528,7 @@ with tab4:
                 x="technique",
                 y="count",
             )
+
             fig_mitre.update_layout(
                 template="plotly_dark",
                 height=380,
@@ -1530,7 +1537,12 @@ with tab4:
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis_title="Technique",
                 yaxis_title="Matched Incidents",
+                font=dict(color="white"),
+                legend=dict(font=dict(color="white")),
             )
+
+            fig_mitre.update_traces(textfont=dict(color="white"))
+
             st.plotly_chart(fig_mitre, use_container_width=True)
         else:
             st.info("No MITRE mappings available.")
@@ -1538,6 +1550,7 @@ with tab4:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
+        # -------- Detection Table --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Detection Rules Simulation")
 
@@ -1552,13 +1565,17 @@ with tab4:
             })
 
         detection_df = pd.DataFrame(detection_rows)
+
         if not detection_df.empty:
             st.dataframe(detection_df, use_container_width=True, hide_index=True)
         else:
             st.info("No detection rules generated.")
+
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # ================= RIGHT =================
     with right:
+        # -------- Severity Chart --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Severity Distribution")
 
@@ -1576,22 +1593,31 @@ with tab4:
             names="severity",
             values="count",
         )
+
         fig_sev.update_layout(
             template="plotly_dark",
             height=380,
             margin=dict(l=20, r=20, t=10, b=20),
             paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white"),
+            legend=dict(font=dict(color="white")),
         )
+
+        fig_sev.update_traces(textfont=dict(color="white"))
+
         st.plotly_chart(fig_sev, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
+        # -------- Region Chart --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Regional Threat Load")
 
         region_counts = filtered_df["region"].value_counts().reset_index()
+
         if not region_counts.empty:
             region_counts.columns = ["region", "count"]
+
             fig_region = go.Figure(
                 data=[
                     go.Bar(
@@ -1600,6 +1626,7 @@ with tab4:
                     )
                 ]
             )
+
             fig_region.update_layout(
                 template="plotly_dark",
                 height=250,
@@ -1608,7 +1635,10 @@ with tab4:
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis_title="Region",
                 yaxis_title="Incidents",
+                font=dict(color="white"),
+                legend=dict(font=dict(color="white")),
             )
+
             st.plotly_chart(fig_region, use_container_width=True)
         else:
             st.info("No regional data available.")
@@ -1616,8 +1646,10 @@ with tab4:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
+        # -------- Analyst Notes --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Analyst Recommendations")
+
         st.markdown(
             """
             <div class="small-muted">
@@ -1633,7 +1665,10 @@ with tab4:
             """,
             unsafe_allow_html=True,
         )
+
         st.markdown("</div>", unsafe_allow_html=True)
+
+# ================= CAMPAIGN DETECTION =================
 st.markdown("<div class='panel'>", unsafe_allow_html=True)
 st.subheader("Threat Campaign Detection")
 
@@ -1657,6 +1692,7 @@ else:
     )
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 # =========================================================
 # TAB 5 - EXPORTS
 # =========================================================
