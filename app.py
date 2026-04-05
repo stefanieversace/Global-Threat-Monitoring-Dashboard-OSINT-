@@ -1333,7 +1333,7 @@ if not sector_counts.empty:
 
 else:
     st.info("No sector data available.")            
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
