@@ -940,6 +940,13 @@ def map_to_mitre(text):
             matched.append(f"{technique_id} - {name}")
 
     return matched if matched else ["Unmapped"]
+def severity_label(score):
+    if score >= 80:
+        return "High"
+    elif score >= 50:
+        return "Medium"
+    else:
+        return "Low"
 def build_dataframe(articles):
     rows = []
 
