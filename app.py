@@ -1334,11 +1334,11 @@ if not sector_counts.empty:
 else:
     st.info("No sector data available.")            
     st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("")
+    st.markdown("")
 
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Executive Snapshot")
-        st.markdown(
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.subheader("Executive Snapshot")
+    st.markdown(
             f"""
             <div class="small-muted">
                 <b>Dominant threat pattern:</b> {html.escape(dominant_threat)}<br><br>
@@ -1349,11 +1349,8 @@ else:
             """,
             unsafe_allow_html=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# =========================================================
-# TAB 2 - ALERT TRIAGE
-# =========================================================
 # =========================================================
 # TAB 2 - ALERT TRIAGE
 # =========================================================
