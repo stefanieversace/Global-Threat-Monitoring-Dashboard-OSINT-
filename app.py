@@ -698,72 +698,64 @@ def infer_sector(text):
         if any(word in text_lower for word in keywords):
             return sector
     return "General"
-
-
 def severity_score(text):
     text_lower = safe_lower(text)
-    score = 20
 
+    score = 10  # baseline
+
+    # HIGH IMPACT
     high_terms = [
-        "ransomware", "explosion", "terror", "missile", "drone strike",
-        "breach", "data breach", "hospital", "critical infrastructure",
-        "airstrike", "shooting", "hostage", "outage", "blackout",
-        "ddos", "zero-day", "power grid", "mass casualty"
+        "ransomware", "data breach", "breach", "explosion", "terror",
+        "shooting", "hostage", "airstrike", "missile", "drone strike",
+        "critical infrastructure", "hospital", "power grid",
+        "zero-day", "mass casualty", "nationwide outage"
     ]
+
+    # MEDIUM IMPACT
     medium_terms = [
-        "phishing", "fraud", "protest", "unrest", "clashes",
-        "investigation", "suspicious", "disruption", "shutdown",
-        "sanctions", "malware", "intrusion"
+        "phishing", "malware", "ddos", "cyber attack", "intrusion",
+        "fraud", "money laundering", "protest", "riot", "unrest",
+        "disruption", "outage", "investigation", "suspicious activity"
+    ]
+
+    # LOW SIGNAL
+    low_terms = [
+        "report", "claims", "possible", "suspected", "monitoring"
     ]
 
     for term in high_terms:
         if term in text_lower:
-            score += 18
+            score += 40
 
     for term in medium_terms:
         if term in text_lower:
-            score += 9
+            score += 20
 
+    for term in low_terms:
+        if term in text_lower:
+            score -= 5
+
+    # TARGET BOOST
     if any(word in text_lower for word in [
-        "government", "bank", "airport", "rail", "hospital", "energy", "power", "cloud", "telecom"
+        "bank", "financial", "airport", "rail", "hospital",
+        "government", "energy", "cloud", "telecom"
     ]):
-        score += 12
+        score += 15
 
+    # SCALE BOOST
     if any(word in text_lower for word in [
-        "multiple", "regional", "national", "global", "widespread", "coordinated"
+        "widespread", "national", "global", "multiple",
+        "coordinated", "large-scale"
     ]):
-        score += 8
+        score += 10
 
-    return min(score, 100)
+    # RECENCY BOOST
+    if any(word in text_lower for word in [
+        "breaking", "urgent", "developing"
+    ]):
+        score += 10
 
-
-def severity_label(score):
-    if score >= 70:
-        return "High"
-    if score >= 45:
-        return "Medium"
-    return "Low"
-
-
-def severity_color(severity):
-    if severity == "High":
-        return "red"
-    if severity == "Medium":
-        return "orange"
-    return "green"
-
-
-def map_to_mitre(text):
-    text_lower = safe_lower(text)
-    hits = []
-
-    for technique, name, keywords in MITRE_RULES:
-        if any(k in text_lower for k in keywords):
-            hits.append(f"{technique} • {name}")
-
-    return hits if hits else ["T1595 • Active Scanning / Unspecified"]
-
-
+    return max(5, min(score, 100))
 def generate_actor_profile(text):
     text_lower = safe_lower(text)
 
