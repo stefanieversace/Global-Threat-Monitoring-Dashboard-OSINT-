@@ -1368,9 +1368,14 @@ with tab2:
 
 incident_id = f"incident_{idx}"
 
-st.markdown(f"""
+st.markdown("""
 <div class="alert-card">
-    ... your HTML UI ...
+    ... all your HTML ...
+</div>
+""", unsafe_allow_html=True)
+)
+
+    
 </div>
 """, unsafe_allow_html=True)
 
