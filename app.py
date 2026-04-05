@@ -1368,7 +1368,15 @@ with tab2:
 
 incident_id = f"incident_{idx}"
 
-b1, b2, b3, b4 = st.columns([1, 1, 1, 1.2])
+st.markdown(f"""
+<div class="alert-card">
+    ... your HTML UI ...
+</div>
+""", unsafe_allow_html=True)
+
+incident_id = f"incident_{idx}"
+
+b1, b2, b3, b4 = st.columns([1,1,1,1.2])
 
 with b1:
     if st.button(f"Escalate #{idx}", key=f"esc_{idx}"):
@@ -1384,8 +1392,11 @@ with b3:
 
 with b4:
     st.link_button("Open source", row["url"])
-for idx, row in queue_view.iterrows():
-    incident_id = f"incident_{idx}"
+
+st.markdown(
+    f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
+    unsafe_allow_html=True,
+)
     )
 )
                         </div>
