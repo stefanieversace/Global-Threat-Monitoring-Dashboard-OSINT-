@@ -1,3 +1,4 @@
+from streamlit_autorefresh import st_autorefresh
 import html
 import re
 from datetime import datetime, timezone
@@ -19,7 +20,13 @@ st.set_page_config(
     page_icon="🌍",
     layout="wide",
 )
+# =========================================================
+# AUTO REFRESH
+# =========================================================
+auto_refresh = st.sidebar.toggle("Auto-refresh (live mode)", value=False)
 
+if auto_refresh:
+    st_autorefresh(interval=60000, key="refresh")
 # =========================================================
 # GLOBAL STYLING
 # =========================================================
@@ -612,6 +619,17 @@ SIMULATED_INCIDENTS = [
 # =========================================================
 # HELPERS
 # =========================================================
+# =========================================================
+# INCIDENT STATE TRACKING
+# =========================================================
+if "incident_status" not in st.session_state:
+    st.session_state.incident_status = {}
+
+def get_incident_status(idx):
+    return st.session_state.incident_status.get(idx, "New")
+
+def set_incident_status(idx, status):
+    st.session_state.incident_status[idx] = status
 def get_newsapi_key():
     try:
         return st.secrets["NEWSAPI_KEY"]
@@ -1105,7 +1123,28 @@ filtered_df = filtered_df.sort_values(
     ["severity_score", "published_dt"],
     ascending=[False, False]
 ).reset_index(drop=True)
+def generate_ai_insight(row):
+    if row["severity"] == "High":
+        return "High-confidence threat with potential operational impact. Immediate validation and escalation recommended."
+    elif row["severity"] == "Medium":
+        return "Moderate-risk activity. Monitor for escalation, correlate with additional intelligence sources."
+    else:
+        return "Low-confidence signal. Retain for situational awareness and pattern tracking."
+def detect_campaigns(df):
+    campaigns = []
 
+    grouped = df.groupby(["threat_type", "region"])
+
+    for (threat, region), group in grouped:
+        if len(group) >= 3:
+            campaigns.append({
+                "threat": threat,
+                "region": region,
+                "count": len(group),
+                "summary": f"Cluster of {len(group)} {threat} incidents detected in {region}"
+            })
+
+    return campaigns
 # =========================================================
 # HERO
 # =========================================================
@@ -1325,8 +1364,29 @@ with tab2:
                             <span class="badge badge-neutral">{html.escape(row["sector"])}</span>
                             <span class="badge badge-neutral">{html.escape(mitre_first)}</span>
                         </div>
-                        <div class="small-muted" style="margin-top:0.65rem;">
-                            {html.escape(row["detection_summary"])}
+                     incident_id = f"incident_{idx}"
+
+b1, b2, b3, b4 = st.columns([1, 1, 1, 1.2])
+
+with b1:
+    if st.button(f"Escalate #{idx}", key=f"esc_{idx}"):
+        set_incident_status(incident_id, "Escalated")
+
+with b2:
+    if st.button(f"Resolve #{idx}", key=f"res_{idx}"):
+        set_incident_status(incident_id, "Resolved")
+
+with b3:
+    if st.button(f"Reset #{idx}", key=f"reset_{idx}"):
+        set_incident_status(incident_id, "New")
+
+with b4:
+    st.link_button(f"Open source", row["url"])
+
+st.markdown(
+    f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
+    unsafe_allow_html=True,
+)
                         </div>
                     </div>
                     <div style="text-align:right; min-width:120px;">
@@ -1584,7 +1644,29 @@ with tab4:
             unsafe_allow_html=True,
         )
         st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<div class='panel'>", unsafe_allow_html=True)
+st.subheader("Threat Campaign Detection")
 
+campaigns = detect_campaigns(filtered_df)
+
+if campaigns:
+    for c in campaigns:
+        st.markdown(
+            f"""
+            <div class="alert-card">
+                <b>{c['threat']}</b> cluster in <b>{c['region']}</b><br>
+                {c['summary']}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+else:
+    st.markdown(
+        "<div class='small-muted'>No multi-incident campaigns detected.</div>",
+        unsafe_allow_html=True,
+    )
+
+st.markdown("</div>", unsafe_allow_html=True)
 # =========================================================
 # TAB 5 - EXPORTS
 # =========================================================
