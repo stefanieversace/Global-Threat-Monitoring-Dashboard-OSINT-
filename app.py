@@ -1386,12 +1386,6 @@ with b4:
     st.link_button("Open source", row["url"])
 for idx, row in queue_view.iterrows():
     incident_id = f"incident_{idx}"
-
-    ...
-
-    st.markdown(
-        f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
-        unsafe_allow_html=True,
     )
 )
                         </div>
