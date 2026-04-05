@@ -1303,20 +1303,36 @@ with tab1:
     ),
     font=dict(color="white")
 )
-            )
-            fig_sector.update_layout(
-                template="plotly_dark",
-                height=320,
-                margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="rgba(0,0,0,0)",
-                fig_sector.update_traces(
-    textfont=dict(color="white")
-)
-            )
-            st.plotly_chart(fig_sector, use_container_width=True)
-        else:
-            st.info("No sector data available.")
+sector_counts = filtered_df["sector"].value_counts().reset_index()
+sector_counts.columns = ["sector", "count"]
 
+if not sector_counts.empty:
+    fig_sector = px.pie(
+        sector_counts,
+        names="sector",
+        values="count",
+        hole=0.55,
+    )
+
+    fig_sector.update_layout(
+        template="plotly_dark",
+        height=320,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        legend=dict(
+            font=dict(color="white", size=12)
+        ),
+        font=dict(color="white")
+    )
+
+    fig_sector.update_traces(
+        textfont=dict(color="white")
+    )
+
+    st.plotly_chart(fig_sector, use_container_width=True)
+
+else:
+    st.info("No sector data available.")            
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
