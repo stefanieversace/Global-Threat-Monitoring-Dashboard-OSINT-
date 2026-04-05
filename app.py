@@ -1329,6 +1329,9 @@ with tab1:
 # =========================================================
 # TAB 2 - ALERT TRIAGE
 # =========================================================
+# =========================================================
+# TAB 2 - ALERT TRIAGE
+# =========================================================
 with tab2:
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.subheader("Auto-Prioritised Alert Queue")
@@ -1353,43 +1356,30 @@ with tab2:
 
         mitre_first = row["mitre_tags"][0] if row["mitre_tags"] else "Unmapped"
 
-        # ---------- ALERT CARD ----------
-        st.markdown(
-            f"""
-            <div class="alert-card {alert_class}">
-                <div style="display:flex; justify-content:space-between; gap:1rem;">
-                    <div style="flex:1;">
-                        <div style="font-size:1.05rem; font-weight:800;">
-                            {html.escape(row["title"])}
-                        </div>
+        card_html = f"""<div class="alert-card {alert_class}">
+<div style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start;">
+<div style="flex:1;">
+<div style="font-size:1.05rem; font-weight:800; color:white;">{html.escape(row["title"])}</div>
+<div class="small-muted" style="margin-top:0.35rem;">
+{html.escape(row["source"])} • {html.escape(row["location"])} • {row["published_dt"].strftime("%d %b %Y %H:%M UTC")}
+</div>
+<div style="margin-top:0.45rem;">
+<span class="badge {badge_class}">{html.escape(row["severity"])}</span>
+<span class="badge badge-neutral">{html.escape(row["threat_type"])}</span>
+<span class="badge badge-neutral">{html.escape(row["sector"])}</span>
+<span class="badge badge-neutral">{html.escape(mitre_first)}</span>
+</div>
+</div>
+<div style="text-align:right; min-width:120px;">
+<div class="small-muted">Score</div>
+<div style="font-size:1.7rem; font-weight:800; color:white;">{row["severity_score"]}</div>
+<div class="small-muted">Priority #{row["queue_priority"]}</div>
+</div>
+</div>
+</div>"""
 
-                        <div class="small-muted">
-                            {html.escape(row["source"])} • {html.escape(row["location"])} • 
-                            {row["published_dt"].strftime("%d %b %Y %H:%M UTC")}
-                        </div>
+        st.markdown(card_html, unsafe_allow_html=True)
 
-                        <div style="margin-top:0.5rem;">
-                            <span class="badge {badge_class}">{row["severity"]}</span>
-                            <span class="badge badge-neutral">{html.escape(row["threat_type"])}</span>
-                            <span class="badge badge-neutral">{html.escape(row["sector"])}</span>
-                            <span class="badge badge-neutral">{html.escape(mitre_first)}</span>
-                        </div>
-                    </div>
-
-                    <div style="text-align:right;">
-                        <div class="small-muted">Score</div>
-                        <div style="font-size:1.5rem; font-weight:800;">
-                            {row["severity_score"]}
-                        </div>
-                        <div class="small-muted">Priority #{row["queue_priority"]}</div>
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # ---------- BUTTONS ----------
         b1, b2, b3, b4 = st.columns([1, 1, 1, 1.2])
 
         with b1:
@@ -1407,14 +1397,12 @@ with tab2:
         with b4:
             st.link_button("Open source", row["url"])
 
-        # ---------- STATUS ----------
         st.markdown(
-            f"<div class='small-muted'><b>Status:</b> {get_incident_status(incident_id)}</div>",
+            f"<div class='small-muted'><b>Status:</b> {html.escape(get_incident_status(incident_id))}</div>",
             unsafe_allow_html=True,
         )
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 # =========================================================
 # TAB 3 - DRILL DOWN
 # =========================================================
