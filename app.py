@@ -1537,7 +1537,7 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== FINAL BALANCED CLASSIFIER =====
+            # ===== BALANCED CLASSIFIER =====
             def map_to_mitre_multi(text):
                 text = text.lower()
 
@@ -1550,7 +1550,7 @@ with tab4:
                     "T1595 - Reconnaissance": 0,
                 }
 
-                # -------- STRONG SIGNALS --------
+                # STRONG
                 if any(k in text for k in ["phishing", "spoof", "impersonation"]):
                     scores["T1566 - Phishing"] += 4
 
@@ -1563,14 +1563,14 @@ with tab4:
                 if any(k in text for k in ["malware", "trojan", "virus"]):
                     scores["T1204 - Execution"] += 4
 
-                # -------- MEDIUM SIGNALS --------
+                # MEDIUM
                 if any(k in text for k in ["fraud", "scam"]):
                     scores["T1566 - Phishing"] += 2
 
                 if any(k in text for k in ["login", "password", "account access"]):
                     scores["T1110 - Credential Access"] += 2
 
-                # -------- CONTEXT SIGNALS (KEY FIX) --------
+                # CONTEXT
                 if any(k in text for k in ["data", "information", "records"]):
                     scores["T1041 - Exfiltration"] += 1
 
@@ -1580,23 +1580,21 @@ with tab4:
                 if any(k in text for k in ["account", "user", "access"]):
                     scores["T1110 - Credential Access"] += 1
 
-                if any(k in text for k in ["email", "message", "communication"]):
+                if any(k in text for k in ["email", "message"]):
                     scores["T1566 - Phishing"] += 1
 
                 # TRUE recon only
-                if any(k in text for k in ["scanning", "probing", "enumeration", "port scan"]):
+                if any(k in text for k in ["scanning", "probing", "enumeration"]):
                     scores["T1595 - Reconnaissance"] += 3
 
-                # -------- SELECT BEST MATCH --------
+                # SELECT BEST
                 best = max(scores, key=scores.get)
 
-                # Weak signal → choose top 2 (prevents bias)
                 if scores[best] <= 1:
                     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
                     selected = [tech for tech, score in sorted_scores[:2] if score > 0]
                     return selected if selected else ["T1204 - Execution"]
 
-                # Strong → multi-technique
                 selected = [tech for tech, score in scores.items() if score >= 3]
 
                 return selected if selected else [best]
@@ -1628,25 +1626,18 @@ with tab4:
                     text_auto=True,
                     aspect="auto"
                 )
-
                 fig_heatmap.update_layout(
                     template="plotly_dark",
                     height=250,
-                    margin=dict(l=20, r=20, t=10, b=20),
                     paper_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="white"),
                 )
-
                 st.plotly_chart(fig_heatmap, use_container_width=True)
 
-            # ===== TREND FIX =====
+            # ===== TREND =====
             st.markdown("**Technique Activity Over Time**")
 
-            date_col = None
-            if "published_dt" in filtered_df.columns:
-                date_col = "published_dt"
-            elif "publishedAt" in filtered_df.columns:
-                date_col = "publishedAt"
+            date_col = "published_dt" if "published_dt" in filtered_df.columns else "publishedAt" if "publishedAt" in filtered_df.columns else None
 
             if date_col:
                 trend_df = filtered_df.copy()
@@ -1657,31 +1648,17 @@ with tab4:
                     trend_df["date"] = trend_df[date_col].dt.date
                     trend_df = trend_df.explode("mitre_tags")
 
-                    trend_counts = (
-                        trend_df.groupby(["date", "mitre_tags"])
-                        .size()
-                        .reset_index(name="count")
+                    trend_counts = trend_df.groupby(["date", "mitre_tags"]).size().reset_index(name="count")
+
+                    fig_trend = px.line(
+                        trend_counts,
+                        x="date",
+                        y="count",
+                        color="mitre_tags",
+                        markers=True
                     )
-
-                    if not trend_counts.empty:
-                        fig_trend = px.line(
-                            trend_counts,
-                            x="date",
-                            y="count",
-                            color="mitre_tags",
-                            markers=True
-                        )
-
-                        fig_trend.update_layout(
-                            template="plotly_dark",
-                            height=250,
-                            margin=dict(l=20, r=20, t=10, b=20),
-                            paper_bgcolor="rgba(0,0,0,0)",
-                            plot_bgcolor="rgba(0,0,0,0)",
-                            font=dict(color="white"),
-                        )
-
-                        st.plotly_chart(fig_trend, use_container_width=True)
+                    fig_trend.update_layout(template="plotly_dark", height=250)
+                    st.plotly_chart(fig_trend, use_container_width=True)
 
         else:
             st.info("No MITRE data available.")
@@ -1711,10 +1688,20 @@ with tab4:
     # ================= RIGHT =================
     with right:
 
+        # ===== PRIORITY SIGNALS (FIXED) =====
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Priority Signals")
 
+        # Normalize severity
+        filtered_df["severity"] = filtered_df["severity"].astype(str).str.title()
+
         high = filtered_df[filtered_df["severity"] == "High"]
+
+        if high.empty:
+            high = filtered_df[filtered_df["severity"] == "Medium"]
+
+        if high.empty:
+            high = filtered_df.head(5)
 
         if not high.empty:
             high_exploded = high.explode("mitre_tags")
@@ -1722,9 +1709,11 @@ with tab4:
 
             for tech, count in counts.head(5).items():
                 st.markdown(
-                    f"<div class='alert-card' style='border-left:4px solid red;'><b>{tech}</b><br>{count} high alerts</div>",
+                    f"<div class='alert-card' style='border-left:4px solid #ff4b4b;'><b>{tech}</b><br>{count} priority signals</div>",
                     unsafe_allow_html=True,
                 )
+        else:
+            st.info("No priority signals available.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 # =========================================================
