@@ -1532,46 +1532,41 @@ with tab4:
 
         if not filtered_df.empty:
 
-            # ===== FORCE CLEAN TEXT =====
+            # ===== CLEAN TEXT =====
             filtered_df["title"] = filtered_df["title"].fillna("").astype(str)
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
+            filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            filtered_df["full_text"] = (
-                filtered_df["title"] + " " + filtered_df["description"]
-            )
-
-            # ===== STRONG MAPPING (NO MORE UNMAPPED) =====
+            # ===== STRONG MAPPING (NO UNMAPPED) =====
             def map_to_mitre_multi(text):
                 text = text.lower()
                 techniques = []
 
-                if "email" in text or "fraud" in text or "scam" in text:
+                if any(k in text for k in ["email", "fraud", "scam", "spoof", "impersonation"]):
                     techniques.append("T1566 - Phishing")
 
-                if "data" in text or "breach" in text or "leak" in text:
-                    techniques.append("T1041 - Exfiltration")
-
-                if "attack" in text or "cyber" in text or "hack" in text:
-                    techniques.append("T1595 - Reconnaissance")
-
-                if "login" in text or "account" in text or "password" in text:
+                if any(k in text for k in ["login", "password", "credential", "account"]):
                     techniques.append("T1110 - Credential Access")
 
-                if "malware" in text or "virus" in text:
+                if any(k in text for k in ["malware", "virus", "trojan", "malicious"]):
                     techniques.append("T1204 - Execution")
 
-                # 🚨 FORCE fallback (THIS FIXES YOUR ISSUE)
+                if any(k in text for k in ["ransomware", "encrypted", "locked"]):
+                    techniques.append("T1486 - Impact")
+
+                if any(k in text for k in ["breach", "data", "leak", "exposed"]):
+                    techniques.append("T1041 - Exfiltration")
+
+                if any(k in text for k in ["cyber", "attack", "hack", "incident"]):
+                    techniques.append("T1595 - Reconnaissance")
+
+                # 🚨 FORCE fallback
                 if not techniques:
                     return ["T1595 - Reconnaissance"]
 
                 return techniques
 
-            # ===== APPLY MAPPING =====
             filtered_df["mitre_tags"] = filtered_df["full_text"].apply(map_to_mitre_multi)
-
-            # ===== DEBUG (REMOVE LATER) =====
-            st.write("Sample text:", filtered_df["full_text"].head(2))
-            st.write("Mapped tags:", filtered_df["mitre_tags"].head(2))
 
             # ===== EXPLODE =====
             mitre_exploded = filtered_df[["mitre_tags"]].explode("mitre_tags")
@@ -1608,38 +1603,61 @@ with tab4:
 
                 st.plotly_chart(fig_heatmap, use_container_width=True)
 
-            # ===== TREND =====
+            # ===== TREND FIX =====
+            st.markdown("**Technique Activity Over Time**")
+
+            # detect correct date column
+            date_col = None
             if "published_dt" in filtered_df.columns:
+                date_col = "published_dt"
+            elif "publishedAt" in filtered_df.columns:
+                date_col = "publishedAt"
+
+            if date_col:
                 trend_df = filtered_df.copy()
-                trend_df["published_dt"] = pd.to_datetime(trend_df["published_dt"], errors="coerce")
-                trend_df = trend_df.dropna(subset=["published_dt"])
 
-                trend_df["date"] = trend_df["published_dt"].dt.date
-                trend_df = trend_df.explode("mitre_tags")
-
-                trend_counts = (
-                    trend_df.groupby(["date", "mitre_tags"])
-                    .size()
-                    .reset_index(name="count")
+                trend_df[date_col] = pd.to_datetime(
+                    trend_df[date_col],
+                    errors="coerce"
                 )
 
-                if not trend_counts.empty:
-                    fig_trend = px.line(
-                        trend_counts,
-                        x="date",
-                        y="count",
-                        color="mitre_tags"
+                trend_df = trend_df.dropna(subset=[date_col])
+
+                if not trend_df.empty:
+                    trend_df["date"] = trend_df[date_col].dt.date
+                    trend_df = trend_df.explode("mitre_tags")
+
+                    trend_counts = (
+                        trend_df.groupby(["date", "mitre_tags"])
+                        .size()
+                        .reset_index(name="count")
                     )
 
-                    fig_trend.update_layout(
-                        template="plotly_dark",
-                        height=250,
-                        margin=dict(l=20, r=20, t=10, b=20),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        font=dict(color="white"),
-                    )
+                    if not trend_counts.empty:
+                        fig_trend = px.line(
+                            trend_counts,
+                            x="date",
+                            y="count",
+                            color="mitre_tags",
+                            markers=True
+                        )
 
-                    st.plotly_chart(fig_trend, use_container_width=True)
+                        fig_trend.update_layout(
+                            template="plotly_dark",
+                            height=250,
+                            margin=dict(l=20, r=20, t=10, b=20),
+                            paper_bgcolor="rgba(0,0,0,0)",
+                            plot_bgcolor="rgba(0,0,0,0)",
+                            font=dict(color="white"),
+                        )
+
+                        st.plotly_chart(fig_trend, use_container_width=True)
+                    else:
+                        st.info("No trend data after grouping.")
+                else:
+                    st.info("No valid timestamps found.")
+            else:
+                st.info("No date column found.")
 
         else:
             st.info("No MITRE data available.")
@@ -1656,7 +1674,7 @@ with tab4:
                 "rule": row.get("threat_type", "Detection"),
                 "summary": str(row.get("title", ""))[:80],
                 "severity": row.get("severity", "Low"),
-                "techniques": ", ".join(row.get("mitre_tags", ["Unmapped"])),
+                "techniques": ", ".join(row.get("mitre_tags", ["T1595 - Reconnaissance"])),
             })
 
         detection_df = pd.DataFrame(detection_rows)
@@ -1719,7 +1737,9 @@ with tab4:
             selected = st.selectbox("Select technique", unique)
 
             drill = filtered_df[
-                filtered_df["mitre_tags"].apply(lambda x: selected in x if isinstance(x, list) else False)
+                filtered_df["mitre_tags"].apply(
+                    lambda x: selected in x if isinstance(x, list) else False
+                )
             ]
 
             for _, row in drill.head(5).iterrows():
