@@ -1528,82 +1528,129 @@ with tab4:
     # ================= LEFT =================
     with left:
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("MITRE Technique Coverage")
+        st.subheader("MITRE ATT&CK Intelligence Panel")
 
-        mitre_exploded = (
-            filtered_df[["mitre_tags"]].explode("mitre_tags")
-            if not filtered_df.empty else pd.DataFrame(columns=["mitre_tags"])
-        )
+        if not filtered_df.empty:
 
-        mitre_counts = mitre_exploded["mitre_tags"].value_counts().reset_index()
+            # -------- PREP DATA --------
+            filtered_df["full_text"] = (
+                filtered_df["title"].fillna("") + " " + filtered_df["description"].fillna("")
+            )
 
-        if not mitre_counts.empty:
+            def map_to_mitre_multi(text):
+                text = str(text).lower()
+                techniques = []
+
+                if any(k in text for k in ["phishing", "scam", "email"]):
+                    techniques.append("T1566 - Phishing")
+
+                if any(k in text for k in ["password", "credential", "login"]):
+                    techniques.append("T1110 - Brute Force")
+
+                if any(k in text for k in ["malware", "trojan"]):
+                    techniques.append("T1204 - User Execution")
+
+                if any(k in text for k in ["ransomware", "encrypted"]):
+                    techniques.append("T1486 - Impact")
+
+                if any(k in text for k in ["data", "breach", "leak"]):
+                    techniques.append("T1041 - Exfiltration")
+
+                if any(k in text for k in ["attack", "hack", "cyber"]):
+                    techniques.append("T1595 - Reconnaissance")
+
+                return techniques if techniques else ["Unmapped"]
+
+            filtered_df["mitre_tags"] = filtered_df["full_text"].apply(map_to_mitre_multi)
+
+            # -------- EXPLODE --------
+            mitre_exploded = filtered_df[["mitre_tags"]].explode("mitre_tags")
+            mitre_exploded = mitre_exploded.rename(columns={"mitre_tags": "technique"})
+
+            mitre_counts = mitre_exploded["technique"].value_counts().reset_index()
             mitre_counts.columns = ["technique", "count"]
 
-            fig_mitre = px.bar(
-                mitre_counts,
-                x="technique",
-                y="count",
+            # -------- TOP TECHNIQUES --------
+            st.markdown("**Top Techniques**")
+            for _, row in mitre_counts.head(5).iterrows():
+                st.markdown(
+                    f"<div class='alert-card'><b>{row['technique']}</b><br>{row['count']} incidents</div>",
+                    unsafe_allow_html=True,
+                )
+
+            # -------- HEATMAP --------
+            st.markdown("**MITRE Heatmap**")
+
+            pivot = mitre_exploded.pivot_table(
+                index="technique",
+                values="technique",
+                aggfunc="count"
             )
-def map_to_mitre(text):
-    text = str(text).lower()
 
-    if any(k in text for k in ["phishing", "scam", "email fraud"]):
-        return "T1566 - Phishing"
+            fig_heatmap = px.imshow(
+                [pivot["technique"].values],
+                text_auto=True,
+                aspect="auto"
+            )
 
-    elif any(k in text for k in ["malware", "trojan", "ransomware"]):
-        return "T1204 - User Execution"
-
-    elif any(k in text for k in ["breach", "data leak", "exposed data"]):
-        return "T1041 - Exfiltration"
-
-    elif any(k in text for k in ["login", "password", "credential"]):
-        return "T1110 - Brute Force"
-
-    elif any(k in text for k in ["cyber attack", "hacker", "attack"]):
-        return "T1595 - Active Scanning"
-
-    return "Unmapped"
-
-
-df["full_text"] = (
-    df["title"].fillna("") + " " + df["description"].fillna("")
-)
-
-df["mapped_technique"] = df["full_text"].apply(map_to_mitre)
-            fig_mitre.update_layout(
+            fig_heatmap.update_layout(
                 template="plotly_dark",
-                height=380,
-                margin=dict(l=20, r=20, t=10, b=90),
+                height=250,
+                margin=dict(l=20, r=20, t=10, b=20),
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                xaxis_title="Technique",
-                yaxis_title="Matched Incidents",
                 font=dict(color="white"),
-                legend=dict(font=dict(color="white")),
             )
 
-            fig_mitre.update_traces(textfont=dict(color="white"))
+            st.plotly_chart(fig_heatmap, use_container_width=True)
 
-            st.plotly_chart(fig_mitre, use_container_width=True)
+            # -------- TREND --------
+            if "published_dt" in filtered_df.columns:
+                trend_df = filtered_df.copy()
+                trend_df["published_dt"] = pd.to_datetime(trend_df["published_dt"], errors="coerce")
+                trend_df = trend_df.dropna(subset=["published_dt"])
+
+                trend_df["date"] = trend_df["published_dt"].dt.date
+                trend_df = trend_df.explode("mitre_tags")
+
+                trend_counts = (
+                    trend_df.groupby(["date", "mitre_tags"])
+                    .size()
+                    .reset_index(name="count")
+                )
+
+                fig_trend = px.line(
+                    trend_counts,
+                    x="date",
+                    y="count",
+                    color="mitre_tags"
+                )
+
+                fig_trend.update_layout(
+                    template="plotly_dark",
+                    height=250,
+                    margin=dict(l=20, r=20, t=10, b=20),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="white"),
+                )
+
+                st.plotly_chart(fig_trend, use_container_width=True)
+
         else:
-            st.info("No MITRE mappings available.")
+            st.info("No MITRE data available.")
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("")
 
-        # -------- Detection Table --------
+        # -------- DETECTION TABLE --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Detection Rules Simulation")
 
         detection_rows = []
         for _, row in filtered_df.head(20).iterrows():
             detection_rows.append({
-                "rule_name": f"{row['threat_type']} Detection",
-                "trigger_summary": row["title"][:95],
-                "severity": row["severity"],
-                "mapped_technique": row["mitre_tags"][0] if row["mitre_tags"] else "Unmapped",
-                "recommended_action": "Escalate to L2" if row["severity"] == "High" else "Monitor / validate context",
+                "rule": row.get("threat_type", "Detection"),
+                "summary": str(row.get("title", ""))[:80],
+                "severity": row.get("severity", "Low"),
+                "techniques": ", ".join(row.get("mitre_tags", ["Unmapped"])),
             })
 
         detection_df = pd.DataFrame(detection_rows)
@@ -1611,130 +1658,73 @@ df["mapped_technique"] = df["full_text"].apply(map_to_mitre)
         if not detection_df.empty:
             st.dataframe(detection_df, use_container_width=True, hide_index=True)
         else:
-            st.info("No detection rules generated.")
+            st.info("No detections.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ================= RIGHT =================
     with right:
-        # -------- Severity Chart --------
+
+        # -------- PRIORITY --------
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("Priority Signals")
+
+        high = filtered_df[filtered_df["severity"] == "High"]
+
+        if not high.empty:
+            high_exploded = high.explode("mitre_tags")
+            counts = high_exploded["mitre_tags"].value_counts()
+
+            for tech, count in counts.head(5).items():
+                st.markdown(
+                    f"<div class='alert-card' style='border-left:4px solid red;'><b>{tech}</b><br>{count} high alerts</div>",
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.info("No high severity alerts.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # -------- SEVERITY --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Severity Distribution")
 
-        sev_counts = (
-            filtered_df["severity"]
-            .value_counts()
-            .reindex(["High", "Medium", "Low"])
-            .fillna(0)
-            .reset_index()
-        )
-        sev_counts.columns = ["severity", "count"]
+        sev = filtered_df["severity"].value_counts().reset_index()
+        sev.columns = ["severity", "count"]
 
-        fig_sev = px.funnel_area(
-            sev_counts,
-            names="severity",
-            values="count",
-        )
-
-        fig_sev.update_layout(
-            template="plotly_dark",
-            height=380,
-            margin=dict(l=20, r=20, t=10, b=20),
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white"),
-            legend=dict(font=dict(color="white")),
-        )
-
-        fig_sev.update_traces(textfont=dict(color="white"))
+        fig_sev = px.pie(sev, names="severity", values="count")
+        fig_sev.update_layout(template="plotly_dark")
 
         st.plotly_chart(fig_sev, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("")
 
-        # -------- Region Chart --------
+        # -------- DRILL DOWN --------
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Regional Threat Load")
+        st.subheader("Technique Drill-Down")
 
-        region_counts = filtered_df["region"].value_counts().reset_index()
+        all_tech = []
+        for tags in filtered_df.get("mitre_tags", []):
+            if isinstance(tags, list):
+                all_tech.extend(tags)
 
-        if not region_counts.empty:
-            region_counts.columns = ["region", "count"]
+        unique = list(set(all_tech))
 
-            fig_region = go.Figure(
-                data=[
-                    go.Bar(
-                        x=region_counts["region"],
-                        y=region_counts["count"],
-                    )
-                ]
-            )
+        if unique:
+            selected = st.selectbox("Select technique", unique)
 
-            fig_region.update_layout(
-                template="plotly_dark",
-                height=250,
-                margin=dict(l=20, r=20, t=10, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                xaxis_title="Region",
-                yaxis_title="Incidents",
-                font=dict(color="white"),
-                legend=dict(font=dict(color="white")),
-            )
+            drill = filtered_df[
+                filtered_df["mitre_tags"].apply(lambda x: selected in x if isinstance(x, list) else False)
+            ]
 
-            st.plotly_chart(fig_region, use_container_width=True)
+            for _, row in drill.head(5).iterrows():
+                st.markdown(
+                    f"<div class='alert-card'><b>{row['title']}</b><br>{row['region']} | {row['severity']}</div>",
+                    unsafe_allow_html=True,
+                )
         else:
-            st.info("No regional data available.")
+            st.info("No techniques available.")
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("")
-
-        # -------- Analyst Notes --------
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Analyst Recommendations")
-
-        st.markdown(
-            """
-            <div class="small-muted">
-                <b>For High severity:</b> validate impact immediately, identify affected entities,
-                determine whether executive escalation is required, and assess continuity implications.<br><br>
-                <b>For Medium severity:</b> confirm credibility, map likely operational impact,
-                enrich with contextual reporting, and track for amplification.<br><br>
-                <b>For Low severity:</b> retain for situational awareness and future correlation.<br><br>
-                <b>Interview line:</b> this dashboard simulates a modern SOC / intelligence workflow
-                by combining ingestion, enrichment, classification, prioritisation, drill-down analysis,
-                and executive reporting in one interface.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# ================= CAMPAIGN DETECTION =================
-st.markdown("<div class='panel'>", unsafe_allow_html=True)
-st.subheader("Threat Campaign Detection")
-
-campaigns = detect_campaigns(filtered_df)
-
-if campaigns:
-    for c in campaigns:
-        st.markdown(
-            f"""
-            <div class="alert-card">
-                <b>{c['threat']}</b> cluster in <b>{c['region']}</b><br>
-                {c['summary']}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-else:
-    st.markdown(
-        "<div class='small-muted'>No multi-incident campaigns detected.</div>",
-        unsafe_allow_html=True,
-    )
-
-st.markdown("</div>", unsafe_allow_html=True)
-
 # =========================================================
 # TAB 5 - EXPORTS
 # =========================================================
