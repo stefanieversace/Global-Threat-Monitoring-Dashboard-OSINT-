@@ -1308,7 +1308,7 @@ with tab1:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("")
 
-        # ---- Sector Exposure (FIXED) ----
+        # ---- Sector Exposure ----
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Sector Exposure")
 
@@ -1688,7 +1688,7 @@ with tab4:
     # ================= RIGHT =================
     with right:
 
-        # ===== PRIORITY SIGNALS (FIXED) =====
+        # ===== PRIORITY SIGNALS =====
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Priority Signals")
 
