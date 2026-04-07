@@ -1537,32 +1537,41 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== STRONG MAPPING (NO UNMAPPED) =====
+            # ===== FIXED REALISTIC MAPPING =====
             def map_to_mitre_multi(text):
                 text = text.lower()
                 techniques = []
 
-                if any(k in text for k in ["email", "fraud", "scam", "spoof", "impersonation"]):
+                # PHISHING
+                if any(k in text for k in ["phishing", "scam", "fraud", "spoof", "impersonation"]):
                     techniques.append("T1566 - Phishing")
 
-                if any(k in text for k in ["login", "password", "credential", "account"]):
+                # CREDENTIAL ACCESS
+                if any(k in text for k in ["credential", "password", "login compromise", "account takeover"]):
                     techniques.append("T1110 - Credential Access")
 
-                if any(k in text for k in ["malware", "virus", "trojan", "malicious"]):
+                # MALWARE / EXECUTION
+                if any(k in text for k in ["malware", "trojan", "virus", "payload", "malicious software"]):
                     techniques.append("T1204 - Execution")
 
-                if any(k in text for k in ["ransomware", "encrypted", "locked"]):
+                # RANSOMWARE / IMPACT
+                if any(k in text for k in ["ransomware", "encrypted files", "locked systems"]):
                     techniques.append("T1486 - Impact")
 
-                if any(k in text for k in ["breach", "data", "leak", "exposed"]):
+                # DATA EXFILTRATION
+                if any(k in text for k in ["data breach", "data leak", "exposed data", "stolen data"]):
                     techniques.append("T1041 - Exfiltration")
 
-                if any(k in text for k in ["cyber", "attack", "hack", "incident"]):
+                # TRUE RECON ONLY (FIXED)
+                if any(k in text for k in [
+                    "scanning", "probing", "enumeration",
+                    "port scan", "network scan", "reconnaissance activity"
+                ]):
                     techniques.append("T1595 - Reconnaissance")
 
-                # 🚨 FORCE fallback
+                # ✅ NO FORCED FALLBACK
                 if not techniques:
-                    return ["T1595 - Reconnaissance"]
+                    return ["Unclassified"]
 
                 return techniques
 
@@ -1603,10 +1612,9 @@ with tab4:
 
                 st.plotly_chart(fig_heatmap, use_container_width=True)
 
-            # ===== TREND FIX =====
+            # ===== TREND (FIXED) =====
             st.markdown("**Technique Activity Over Time**")
 
-            # detect correct date column
             date_col = None
             if "published_dt" in filtered_df.columns:
                 date_col = "published_dt"
@@ -1616,11 +1624,7 @@ with tab4:
             if date_col:
                 trend_df = filtered_df.copy()
 
-                trend_df[date_col] = pd.to_datetime(
-                    trend_df[date_col],
-                    errors="coerce"
-                )
-
+                trend_df[date_col] = pd.to_datetime(trend_df[date_col], errors="coerce")
                 trend_df = trend_df.dropna(subset=[date_col])
 
                 if not trend_df.empty:
@@ -1653,9 +1657,9 @@ with tab4:
 
                         st.plotly_chart(fig_trend, use_container_width=True)
                     else:
-                        st.info("No trend data after grouping.")
+                        st.info("No trend data available.")
                 else:
-                    st.info("No valid timestamps found.")
+                    st.info("No valid timestamps.")
             else:
                 st.info("No date column found.")
 
@@ -1674,7 +1678,7 @@ with tab4:
                 "rule": row.get("threat_type", "Detection"),
                 "summary": str(row.get("title", ""))[:80],
                 "severity": row.get("severity", "Low"),
-                "techniques": ", ".join(row.get("mitre_tags", ["T1595 - Reconnaissance"])),
+                "techniques": ", ".join(row.get("mitre_tags", ["Unclassified"])),
             })
 
         detection_df = pd.DataFrame(detection_rows)
