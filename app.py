@@ -1710,6 +1710,8 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
+st.write(df.columns)
+st.write(df.head(5))
 def map_to_mitre(text):
     text = str(text).lower()
 
