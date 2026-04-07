@@ -1537,44 +1537,52 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== FIXED REALISTIC MAPPING =====
+            # ===== BALANCED MAPPING ENGINE =====
             def map_to_mitre_multi(text):
                 text = text.lower()
                 techniques = []
 
-                # PHISHING
-                if any(k in text for k in ["phishing", "scam", "fraud", "spoof", "impersonation"]):
+                # ------------------------
+                # STRONG SIGNALS (HIGH CONFIDENCE)
+                # ------------------------
+                if any(k in text for k in ["phishing", "scam", "spoof", "impersonation"]):
                     techniques.append("T1566 - Phishing")
 
-                # CREDENTIAL ACCESS
-                if any(k in text for k in ["credential", "password", "login compromise", "account takeover"]):
-                    techniques.append("T1110 - Credential Access")
-
-                # MALWARE / EXECUTION
-                if any(k in text for k in ["malware", "trojan", "virus", "payload", "malicious software"]):
-                    techniques.append("T1204 - Execution")
-
-                # RANSOMWARE / IMPACT
-                if any(k in text for k in ["ransomware", "encrypted files", "locked systems"]):
+                if any(k in text for k in ["ransomware", "encrypted", "locked systems"]):
                     techniques.append("T1486 - Impact")
 
-                # DATA EXFILTRATION
-                if any(k in text for k in ["data breach", "data leak", "exposed data", "stolen data"]):
+                if any(k in text for k in ["data breach", "leak", "exposed data", "stolen data"]):
                     techniques.append("T1041 - Exfiltration")
 
-                # TRUE RECON ONLY (FIXED)
-                if any(k in text for k in [
-                    "scanning", "probing", "enumeration",
-                    "port scan", "network scan", "reconnaissance activity"
-                ]):
-                    techniques.append("T1595 - Reconnaissance")
+                if any(k in text for k in ["malware", "trojan", "virus", "payload"]):
+                    techniques.append("T1204 - Execution")
 
-                # ✅ NO FORCED FALLBACK
+                # ------------------------
+                # MEDIUM SIGNALS
+                # ------------------------
+                if any(k in text for k in ["login", "password", "credential", "account access"]):
+                    techniques.append("T1110 - Credential Access")
+
+                if any(k in text for k in ["fraud", "financial crime", "scam operation"]):
+                    techniques.append("T1566 - Phishing")
+
+                # ------------------------
+                # LIGHT SIGNALS (CONTROLLED FALLBACK)
+                # ------------------------
+                if any(k in text for k in ["cyber", "attack", "hack"]):
+                    # only add if nothing stronger exists
+                    if not techniques:
+                        techniques.append("T1595 - Reconnaissance")
+
+                # ------------------------
+                # FINAL FALLBACK (ONLY IF NOTHING MATCHES)
+                # ------------------------
                 if not techniques:
-                    return ["Unclassified"]
+                    techniques.append("Unclassified")
 
                 return techniques
 
+            # APPLY
             filtered_df["mitre_tags"] = filtered_df["full_text"].apply(map_to_mitre_multi)
 
             # ===== EXPLODE =====
@@ -1656,12 +1664,6 @@ with tab4:
                         )
 
                         st.plotly_chart(fig_trend, use_container_width=True)
-                    else:
-                        st.info("No trend data available.")
-                else:
-                    st.info("No valid timestamps.")
-            else:
-                st.info("No date column found.")
 
         else:
             st.info("No MITRE data available.")
@@ -1685,8 +1687,6 @@ with tab4:
 
         if not detection_df.empty:
             st.dataframe(detection_df, use_container_width=True, hide_index=True)
-        else:
-            st.info("No detections.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1708,51 +1708,6 @@ with tab4:
                     f"<div class='alert-card' style='border-left:4px solid red;'><b>{tech}</b><br>{count} high alerts</div>",
                     unsafe_allow_html=True,
                 )
-        else:
-            st.info("No high severity alerts.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # ===== SEVERITY =====
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Severity Distribution")
-
-        sev = filtered_df["severity"].value_counts().reset_index()
-        sev.columns = ["severity", "count"]
-
-        fig_sev = px.pie(sev, names="severity", values="count")
-        fig_sev.update_layout(template="plotly_dark")
-
-        st.plotly_chart(fig_sev, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # ===== DRILL DOWN =====
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("Technique Drill-Down")
-
-        all_tech = []
-        for tags in filtered_df.get("mitre_tags", []):
-            if isinstance(tags, list):
-                all_tech.extend(tags)
-
-        unique = list(set(all_tech))
-
-        if unique:
-            selected = st.selectbox("Select technique", unique)
-
-            drill = filtered_df[
-                filtered_df["mitre_tags"].apply(
-                    lambda x: selected in x if isinstance(x, list) else False
-                )
-            ]
-
-            for _, row in drill.head(5).iterrows():
-                st.markdown(
-                    f"<div class='alert-card'><b>{row['title']}</b><br>{row['region']} | {row['severity']}</div>",
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.info("No techniques available.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 # =========================================================
