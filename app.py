@@ -1537,7 +1537,7 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== FINAL SCORING-BASED CLASSIFIER =====
+            # ===== FINAL BALANCED CLASSIFIER =====
             def map_to_mitre_multi(text):
                 text = text.lower()
 
@@ -1550,40 +1550,53 @@ with tab4:
                     "T1595 - Reconnaissance": 0,
                 }
 
-                # HIGH CONFIDENCE
+                # -------- STRONG SIGNALS --------
                 if any(k in text for k in ["phishing", "spoof", "impersonation"]):
-                    scores["T1566 - Phishing"] += 3
+                    scores["T1566 - Phishing"] += 4
 
                 if any(k in text for k in ["ransomware", "encrypted", "locked"]):
-                    scores["T1486 - Impact"] += 3
+                    scores["T1486 - Impact"] += 4
 
                 if any(k in text for k in ["data breach", "leak", "exposed", "stolen data"]):
-                    scores["T1041 - Exfiltration"] += 3
+                    scores["T1041 - Exfiltration"] += 4
 
                 if any(k in text for k in ["malware", "trojan", "virus"]):
-                    scores["T1204 - Execution"] += 3
+                    scores["T1204 - Execution"] += 4
 
-                # MEDIUM
+                # -------- MEDIUM SIGNALS --------
                 if any(k in text for k in ["fraud", "scam"]):
                     scores["T1566 - Phishing"] += 2
 
                 if any(k in text for k in ["login", "password", "account access"]):
                     scores["T1110 - Credential Access"] += 2
 
-                # CONTEXT
-                if any(k in text for k in ["system", "network", "infrastructure"]):
-                    scores["T1595 - Reconnaissance"] += 1
+                # -------- CONTEXT SIGNALS (KEY FIX) --------
+                if any(k in text for k in ["data", "information", "records"]):
+                    scores["T1041 - Exfiltration"] += 1
 
-                if any(k in text for k in ["cyber", "attack", "hack", "incident"]):
-                    scores["T1595 - Reconnaissance"] += 2
+                if any(k in text for k in ["system", "network", "server", "infrastructure"]):
+                    scores["T1204 - Execution"] += 1
 
-                # PICK BEST MATCH
+                if any(k in text for k in ["account", "user", "access"]):
+                    scores["T1110 - Credential Access"] += 1
+
+                if any(k in text for k in ["email", "message", "communication"]):
+                    scores["T1566 - Phishing"] += 1
+
+                # TRUE recon only
+                if any(k in text for k in ["scanning", "probing", "enumeration", "port scan"]):
+                    scores["T1595 - Reconnaissance"] += 3
+
+                # -------- SELECT BEST MATCH --------
                 best = max(scores, key=scores.get)
 
-                if scores[best] == 0:
-                    return ["T1595 - Reconnaissance"]
+                # Weak signal → choose top 2 (prevents bias)
+                if scores[best] <= 1:
+                    sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+                    selected = [tech for tech, score in sorted_scores[:2] if score > 0]
+                    return selected if selected else ["T1204 - Execution"]
 
-                # MULTI-TECHNIQUE (strong overlaps)
+                # Strong → multi-technique
                 selected = [tech for tech, score in scores.items() if score >= 3]
 
                 return selected if selected else [best]
@@ -1685,7 +1698,7 @@ with tab4:
                 "rule": row.get("threat_type", "Detection"),
                 "summary": str(row.get("title", ""))[:80],
                 "severity": row.get("severity", "Low"),
-                "techniques": ", ".join(row.get("mitre_tags", ["T1595 - Reconnaissance"])),
+                "techniques": ", ".join(row.get("mitre_tags", ["T1204 - Execution"])),
             })
 
         detection_df = pd.DataFrame(detection_rows)
