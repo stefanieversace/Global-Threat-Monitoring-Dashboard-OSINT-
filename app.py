@@ -1532,35 +1532,55 @@ with tab4:
 
         if not filtered_df.empty:
 
-            # -------- PREP DATA --------
+            # -------- BUILD FULL TEXT --------
             filtered_df["full_text"] = (
                 filtered_df["title"].fillna("") + " " + filtered_df["description"].fillna("")
             )
 
+            # -------- FIXED MAPPING FUNCTION --------
             def map_to_mitre_multi(text):
                 text = str(text).lower()
                 techniques = []
 
-                if any(k in text for k in ["phishing", "scam", "email"]):
+                # PHISHING / FRAUD
+                if any(k in text for k in [
+                    "phishing", "scam", "fraud", "spoof", "email", "impersonation"
+                ]):
                     techniques.append("T1566 - Phishing")
 
-                if any(k in text for k in ["password", "credential", "login"]):
-                    techniques.append("T1110 - Brute Force")
+                # CREDENTIAL ACCESS
+                if any(k in text for k in [
+                    "login", "password", "credential", "unauthorised access", "account access"
+                ]):
+                    techniques.append("T1110 - Credential Access")
 
-                if any(k in text for k in ["malware", "trojan"]):
+                # MALWARE
+                if any(k in text for k in [
+                    "malware", "trojan", "virus", "payload", "malicious"
+                ]):
                     techniques.append("T1204 - User Execution")
 
-                if any(k in text for k in ["ransomware", "encrypted"]):
+                # RANSOMWARE
+                if any(k in text for k in [
+                    "ransomware", "encrypted", "locked files"
+                ]):
                     techniques.append("T1486 - Impact")
 
-                if any(k in text for k in ["data", "breach", "leak"]):
+                # DATA BREACH
+                if any(k in text for k in [
+                    "breach", "data leak", "exposed", "stolen data"
+                ]):
                     techniques.append("T1041 - Exfiltration")
 
-                if any(k in text for k in ["attack", "hack", "cyber"]):
+                # GENERIC CYBER
+                if any(k in text for k in [
+                    "cyber", "attack", "hack", "incident", "security threat"
+                ]):
                     techniques.append("T1595 - Reconnaissance")
 
                 return techniques if techniques else ["Unmapped"]
 
+            # -------- APPLY --------
             filtered_df["mitre_tags"] = filtered_df["full_text"].apply(map_to_mitre_multi)
 
             # -------- EXPLODE --------
@@ -1587,21 +1607,22 @@ with tab4:
                 aggfunc="count"
             )
 
-            fig_heatmap = px.imshow(
-                [pivot["technique"].values],
-                text_auto=True,
-                aspect="auto"
-            )
+            if not pivot.empty:
+                fig_heatmap = px.imshow(
+                    [pivot["technique"].values],
+                    text_auto=True,
+                    aspect="auto"
+                )
 
-            fig_heatmap.update_layout(
-                template="plotly_dark",
-                height=250,
-                margin=dict(l=20, r=20, t=10, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="white"),
-            )
+                fig_heatmap.update_layout(
+                    template="plotly_dark",
+                    height=250,
+                    margin=dict(l=20, r=20, t=10, b=20),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="white"),
+                )
 
-            st.plotly_chart(fig_heatmap, use_container_width=True)
+                st.plotly_chart(fig_heatmap, use_container_width=True)
 
             # -------- TREND --------
             if "published_dt" in filtered_df.columns:
@@ -1618,22 +1639,23 @@ with tab4:
                     .reset_index(name="count")
                 )
 
-                fig_trend = px.line(
-                    trend_counts,
-                    x="date",
-                    y="count",
-                    color="mitre_tags"
-                )
+                if not trend_counts.empty:
+                    fig_trend = px.line(
+                        trend_counts,
+                        x="date",
+                        y="count",
+                        color="mitre_tags"
+                    )
 
-                fig_trend.update_layout(
-                    template="plotly_dark",
-                    height=250,
-                    margin=dict(l=20, r=20, t=10, b=20),
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="white"),
-                )
+                    fig_trend.update_layout(
+                        template="plotly_dark",
+                        height=250,
+                        margin=dict(l=20, r=20, t=10, b=20),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        font=dict(color="white"),
+                    )
 
-                st.plotly_chart(fig_trend, use_container_width=True)
+                    st.plotly_chart(fig_trend, use_container_width=True)
 
         else:
             st.info("No MITRE data available.")
