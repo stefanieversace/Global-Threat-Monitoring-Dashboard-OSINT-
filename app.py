@@ -1537,46 +1537,56 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== FINAL BALANCED CLASSIFIER =====
+            # ===== FINAL SCORING-BASED CLASSIFIER =====
             def map_to_mitre_multi(text):
                 text = text.lower()
-                techniques = []
 
-                # ---------- HIGH CONFIDENCE ----------
+                scores = {
+                    "T1566 - Phishing": 0,
+                    "T1110 - Credential Access": 0,
+                    "T1204 - Execution": 0,
+                    "T1486 - Impact": 0,
+                    "T1041 - Exfiltration": 0,
+                    "T1595 - Reconnaissance": 0,
+                }
+
+                # HIGH CONFIDENCE
                 if any(k in text for k in ["phishing", "spoof", "impersonation"]):
-                    techniques.append("T1566 - Phishing")
+                    scores["T1566 - Phishing"] += 3
 
-                if any(k in text for k in ["ransomware", "files encrypted", "systems locked"]):
-                    techniques.append("T1486 - Impact")
+                if any(k in text for k in ["ransomware", "encrypted", "locked"]):
+                    scores["T1486 - Impact"] += 3
 
-                if any(k in text for k in ["data breach", "data leak", "exposed data", "stolen data"]):
-                    techniques.append("T1041 - Exfiltration")
+                if any(k in text for k in ["data breach", "leak", "exposed", "stolen data"]):
+                    scores["T1041 - Exfiltration"] += 3
 
-                if any(k in text for k in ["malware", "virus", "trojan", "infected"]):
-                    techniques.append("T1204 - Execution")
+                if any(k in text for k in ["malware", "trojan", "virus"]):
+                    scores["T1204 - Execution"] += 3
 
-                # ---------- MEDIUM CONFIDENCE ----------
-                if any(k in text for k in ["fraud", "scam", "financial crime"]):
-                    techniques.append("T1566 - Phishing")
+                # MEDIUM
+                if any(k in text for k in ["fraud", "scam"]):
+                    scores["T1566 - Phishing"] += 2
 
-                if any(k in text for k in ["login", "password", "account access", "unauthorised access"]):
-                    techniques.append("T1110 - Credential Access")
+                if any(k in text for k in ["login", "password", "account access"]):
+                    scores["T1110 - Credential Access"] += 2
 
-                # ---------- REALISTIC NEWS LANGUAGE ----------
-                if any(k in text for k in [
-                    "cyber attack", "cyberattack", "security incident",
-                    "systems disrupted", "network disruption",
-                    "service outage", "attack on infrastructure"
-                ]):
-                    techniques.append("T1595 - Reconnaissance")
+                # CONTEXT
+                if any(k in text for k in ["system", "network", "infrastructure"]):
+                    scores["T1595 - Reconnaissance"] += 1
 
-                # ---------- SMART FALLBACK ----------
-                if not techniques:
-                    if any(k in text for k in ["cyber", "attack", "hack", "security"]):
-                        return ["T1595 - Reconnaissance"]
-                    return ["Unclassified"]
+                if any(k in text for k in ["cyber", "attack", "hack", "incident"]):
+                    scores["T1595 - Reconnaissance"] += 2
 
-                return techniques
+                # PICK BEST MATCH
+                best = max(scores, key=scores.get)
+
+                if scores[best] == 0:
+                    return ["T1595 - Reconnaissance"]
+
+                # MULTI-TECHNIQUE (strong overlaps)
+                selected = [tech for tech, score in scores.items() if score >= 3]
+
+                return selected if selected else [best]
 
             # APPLY
             filtered_df["mitre_tags"] = filtered_df["full_text"].apply(map_to_mitre_multi)
@@ -1616,7 +1626,7 @@ with tab4:
 
                 st.plotly_chart(fig_heatmap, use_container_width=True)
 
-            # ===== TREND (FIXED) =====
+            # ===== TREND FIX =====
             st.markdown("**Technique Activity Over Time**")
 
             date_col = None
@@ -1675,7 +1685,7 @@ with tab4:
                 "rule": row.get("threat_type", "Detection"),
                 "summary": str(row.get("title", ""))[:80],
                 "severity": row.get("severity", "Low"),
-                "techniques": ", ".join(row.get("mitre_tags", ["Unclassified"])),
+                "techniques": ", ".join(row.get("mitre_tags", ["T1595 - Reconnaissance"])),
             })
 
         detection_df = pd.DataFrame(detection_rows)
@@ -1688,7 +1698,6 @@ with tab4:
     # ================= RIGHT =================
     with right:
 
-        # ===== PRIORITY =====
         st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.subheader("Priority Signals")
 
