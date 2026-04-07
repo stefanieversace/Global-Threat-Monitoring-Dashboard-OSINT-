@@ -1537,48 +1537,44 @@ with tab4:
             filtered_df["description"] = filtered_df["description"].fillna("").astype(str)
             filtered_df["full_text"] = filtered_df["title"] + " " + filtered_df["description"]
 
-            # ===== BALANCED MAPPING ENGINE =====
+            # ===== FINAL BALANCED CLASSIFIER =====
             def map_to_mitre_multi(text):
                 text = text.lower()
                 techniques = []
 
-                # ------------------------
-                # STRONG SIGNALS (HIGH CONFIDENCE)
-                # ------------------------
-                if any(k in text for k in ["phishing", "scam", "spoof", "impersonation"]):
+                # ---------- HIGH CONFIDENCE ----------
+                if any(k in text for k in ["phishing", "spoof", "impersonation"]):
                     techniques.append("T1566 - Phishing")
 
-                if any(k in text for k in ["ransomware", "encrypted", "locked systems"]):
+                if any(k in text for k in ["ransomware", "files encrypted", "systems locked"]):
                     techniques.append("T1486 - Impact")
 
-                if any(k in text for k in ["data breach", "leak", "exposed data", "stolen data"]):
+                if any(k in text for k in ["data breach", "data leak", "exposed data", "stolen data"]):
                     techniques.append("T1041 - Exfiltration")
 
-                if any(k in text for k in ["malware", "trojan", "virus", "payload"]):
+                if any(k in text for k in ["malware", "virus", "trojan", "infected"]):
                     techniques.append("T1204 - Execution")
 
-                # ------------------------
-                # MEDIUM SIGNALS
-                # ------------------------
-                if any(k in text for k in ["login", "password", "credential", "account access"]):
-                    techniques.append("T1110 - Credential Access")
-
-                if any(k in text for k in ["fraud", "financial crime", "scam operation"]):
+                # ---------- MEDIUM CONFIDENCE ----------
+                if any(k in text for k in ["fraud", "scam", "financial crime"]):
                     techniques.append("T1566 - Phishing")
 
-                # ------------------------
-                # LIGHT SIGNALS (CONTROLLED FALLBACK)
-                # ------------------------
-                if any(k in text for k in ["cyber", "attack", "hack"]):
-                    # only add if nothing stronger exists
-                    if not techniques:
-                        techniques.append("T1595 - Reconnaissance")
+                if any(k in text for k in ["login", "password", "account access", "unauthorised access"]):
+                    techniques.append("T1110 - Credential Access")
 
-                # ------------------------
-                # FINAL FALLBACK (ONLY IF NOTHING MATCHES)
-                # ------------------------
+                # ---------- REALISTIC NEWS LANGUAGE ----------
+                if any(k in text for k in [
+                    "cyber attack", "cyberattack", "security incident",
+                    "systems disrupted", "network disruption",
+                    "service outage", "attack on infrastructure"
+                ]):
+                    techniques.append("T1595 - Reconnaissance")
+
+                # ---------- SMART FALLBACK ----------
                 if not techniques:
-                    techniques.append("Unclassified")
+                    if any(k in text for k in ["cyber", "attack", "hack", "security"]):
+                        return ["T1595 - Reconnaissance"]
+                    return ["Unclassified"]
 
                 return techniques
 
@@ -1631,7 +1627,6 @@ with tab4:
 
             if date_col:
                 trend_df = filtered_df.copy()
-
                 trend_df[date_col] = pd.to_datetime(trend_df[date_col], errors="coerce")
                 trend_df = trend_df.dropna(subset=[date_col])
 
