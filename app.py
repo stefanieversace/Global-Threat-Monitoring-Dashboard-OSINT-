@@ -1710,6 +1710,30 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
+def map_to_mitre(text):
+    text = str(text).lower()
+
+    if any(k in text for k in ["phishing", "credential harvest", "fake login"]):
+        return "T1566 - Phishing"
+
+    elif any(k in text for k in ["brute force", "password spray", "login attempt"]):
+        return "T1110 - Brute Force"
+
+    elif any(k in text for k in ["malware", "trojan", "ransomware"]):
+        return "T1204 - User Execution"
+
+    elif any(k in text for k in ["c2", "command and control", "beaconing"]):
+        return "T1071 - Application Layer Protocol"
+
+    elif any(k in text for k in ["data exfiltration", "data leak"]):
+        return "T1041 - Exfiltration Over C2 Channel"
+
+    elif any(k in text for k in ["lateral movement", "internal spread"]):
+        return "T1021 - Remote Services"
+
+    else:
+        return "Unmapped"
+
 # =========================================================
 # TAB 5 - EXPORTS
 # =========================================================
@@ -1758,17 +1782,7 @@ with tab5:
     "T1566 - Phishing": ["phishing", "spoofed email"],
     "T1110 - Brute Force": ["failed login", "password attempt"],
     "T1059 - Command Execution": ["powershell", "cmd.exe"],
-}
-
-def map_to_mitre(text):
-    text = text.lower()
-
-    for technique, keywords in MITRE_KEYWORDS.items():
-        if any(k in text for k in keywords):
-            return technique
-
-    return "Unmapped"
-   
+}   
 # =========================================================
 # FOOTER
 # =========================================================
