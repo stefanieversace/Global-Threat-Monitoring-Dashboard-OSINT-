@@ -1545,7 +1545,32 @@ with tab4:
                 x="technique",
                 y="count",
             )
+def map_to_mitre(text):
+    text = str(text).lower()
 
+    if any(k in text for k in ["phishing", "scam", "email fraud"]):
+        return "T1566 - Phishing"
+
+    elif any(k in text for k in ["malware", "trojan", "ransomware"]):
+        return "T1204 - User Execution"
+
+    elif any(k in text for k in ["breach", "data leak", "exposed data"]):
+        return "T1041 - Exfiltration"
+
+    elif any(k in text for k in ["login", "password", "credential"]):
+        return "T1110 - Brute Force"
+
+    elif any(k in text for k in ["cyber attack", "hacker", "attack"]):
+        return "T1595 - Active Scanning"
+
+    return "Unmapped"
+
+
+df["full_text"] = (
+    df["title"].fillna("") + " " + df["description"].fillna("")
+)
+
+df["mapped_technique"] = df["full_text"].apply(map_to_mitre)
             fig_mitre.update_layout(
                 template="plotly_dark",
                 height=380,
@@ -1709,32 +1734,6 @@ else:
     )
 
 st.markdown("</div>", unsafe_allow_html=True)
-
-st.write(df.columns)
-st.write(df.head(5))
-def map_to_mitre(text):
-    text = str(text).lower()
-
-    if any(k in text for k in ["phishing", "credential harvest", "fake login"]):
-        return "T1566 - Phishing"
-
-    elif any(k in text for k in ["brute force", "password spray", "login attempt"]):
-        return "T1110 - Brute Force"
-
-    elif any(k in text for k in ["malware", "trojan", "ransomware"]):
-        return "T1204 - User Execution"
-
-    elif any(k in text for k in ["c2", "command and control", "beaconing"]):
-        return "T1071 - Application Layer Protocol"
-
-    elif any(k in text for k in ["data exfiltration", "data leak"]):
-        return "T1041 - Exfiltration Over C2 Channel"
-
-    elif any(k in text for k in ["lateral movement", "internal spread"]):
-        return "T1021 - Remote Services"
-
-    else:
-        return "Unmapped"
 
 # =========================================================
 # TAB 5 - EXPORTS
