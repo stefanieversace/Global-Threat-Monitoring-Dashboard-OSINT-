@@ -847,6 +847,9 @@ def simulated_log_lines(row):
 
 
 def build_brief(df):
+    df["mapped_technique"] = (
+    df["title"].fillna("") + " " + df["description"].fillna("")
+).apply(map_to_mitre)
     now_str = datetime.now().strftime("%d %b %Y, %H:%M")
     total_count = len(df)
     high_count = int((df["severity"] == "High").sum()) if not df.empty else 0
@@ -1751,6 +1754,20 @@ with tab5:
             mime="text/csv",
         )
         st.markdown("</div>", unsafe_allow_html=True)
+    MITRE_KEYWORDS = {
+    "T1566 - Phishing": ["phishing", "spoofed email"],
+    "T1110 - Brute Force": ["failed login", "password attempt"],
+    "T1059 - Command Execution": ["powershell", "cmd.exe"],
+}
+
+def map_to_mitre(text):
+    text = text.lower()
+
+    for technique, keywords in MITRE_KEYWORDS.items():
+        if any(k in text for k in keywords):
+            return technique
+
+    return "Unmapped"
    
 # =========================================================
 # FOOTER
