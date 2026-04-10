@@ -60,7 +60,7 @@ int main() {
         }
     }
 
-    // 📤 Output JSON
+    // 
     ofstream out("../data/alerts.json");
 
     if (!out.is_open()) {
